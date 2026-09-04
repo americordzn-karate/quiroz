@@ -1,0 +1,1888 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Evaluación de Karate</title>
+  <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/americordzn-karate/examenes/refs/heads/main/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  .login-screen{
+
+  position:fixed;
+  inset:0;
+
+  background:#111827;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  z-index:9999;
+
+}
+
+.login-box{
+
+  background:white;
+
+  padding:30px;
+
+  border-radius:18px;
+
+  width:320px;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:16px;
+
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+
+}
+
+.login-box h2{
+
+  margin:0;
+  text-align:center;
+
+}
+
+.login-box input{
+
+  padding:14px;
+
+  border-radius:10px;
+
+  border:1px solid #ccc;
+
+  font-size:1rem;
+
+}
+
+.login-box button{
+
+  padding:14px;
+
+  border:none;
+
+  border-radius:12px;
+
+  background:#111827;
+
+  color:white;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+}
+
+#login-msg{
+
+  color:red;
+  text-align:center;
+
+}
+:root{
+  --red:#c0392b;--red-d:#922b21;--red-l:#fdf0ef;
+  --gold:#b8860b;--gold-l:#fef9e7;
+  --ink:#111;--ink2:#444;--ink3:#888;--ink4:#bbb;
+  --bg:#f4f2ed;--white:#fff;
+  --green:#1a7a3c;--green-bg:#eaf5ee;
+  --border:#ddd;--radius:10px;
+  --shadow:0 2px 12px rgba(0,0,0,0.07);
+  --font-h:'Noto Serif JP',serif;
+  --font:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh}
+
+/* TOPBAR */
+.topbar{background:var(--ink);color:#fff;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;position:sticky;top:0;z-index:200}
+.brand{font-family:var(--font-h);font-size:.95rem;display:flex;align-items:center;gap:8px}
+.brand .k{color:#c9a84c;font-size:1.2rem}
+.tnav{display:flex;gap:4px}
+.tnav button{background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);padding:5px 13px;border-radius:6px;font-family:var(--font);font-size:.8rem;cursor:pointer;transition:.15s}
+.tnav button:hover,.tnav button.on{background:var(--red);border-color:var(--red);color:#fff}
+
+/* VIEWS */
+.view{display:none;padding:1.5rem;max-width:1100px;margin:0 auto}
+.view.on{display:block}
+
+/* BANNER BIENVENIDA */
+#banner-usuario{display:none;max-width:1100px;margin:.75rem auto 0;padding:0 1.5rem}
+.banner-inner{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 20px;display:flex;align-items:center;gap:14px}
+.banner-escudo{width:52px;height:52px;object-fit:contain;flex-shrink:0}
+.banner-texto{display:flex;flex-direction:column;gap:2px}
+.banner-saludo{font-size:.78rem;color:var(--ink3);font-weight:500}
+.banner-nombre{font-family:var(--font-h);font-size:1.1rem;font-weight:700;color:var(--ink)}
+
+/* SECTION TITLE */
+.stitle{font-family:var(--font-h);font-size:1.15rem;margin-bottom:1rem;display:flex;align-items:center;gap:10px;color:var(--ink)}
+.stitle::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* GRUPO TABS */
+.gtabs{display:flex;gap:0;margin-bottom:1rem;border-bottom:2px solid var(--border)}
+.gtab{padding:7px 20px;border:none;background:transparent;font-family:var(--font);font-size:.88rem;cursor:pointer;color:var(--ink3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.gtab.on{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;box-shadow:var(--shadow);margin-bottom:1.25rem}
+
+/* BTN */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:7px;font-family:var(--font);font-size:.86rem;font-weight:500;cursor:pointer;border:none;transition:.15s}
+.btn:active{transform:scale(.97)}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{background:var(--red-d)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--border)}
+.btn-ghost:hover{background:#f0ede8}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:1rem}
+
+/* LOADER */
+.loader{text-align:center;padding:3rem;color:var(--ink3);font-size:.9rem}
+.err{color:var(--red)}
+
+/* DIVIDER */
+hr.div{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--ink);color:#fff;padding:11px 18px;border-radius:8px;font-size:.86rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9999;max-width:300px}
+#toast.on{opacity:1}
+#toast.err{background:var(--red)}
+
+/* ── FICHAS DE ALUMNOS ── */
+.fichas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+.ficha{background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;transition:box-shadow .2s}
+.ficha:hover{box-shadow:0 4px 20px rgba(0,0,0,0.12)}
+.ficha-head{background:var(--ink);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.ficha-head .fn{font-family:var(--font-h);font-size:1rem;font-weight:700}
+.ficha-head .fg{font-size:.78rem;color:rgba(255,255,255,.65);margin-top:2px}
+.ficha-num{background:rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;font-size:.78rem;font-weight:600}
+.ficha-body{padding:14px 16px}
+.aspecto-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0ede8}
+.aspecto-row:last-child{border-bottom:none}
+.asp-label{font-size:.83rem;font-weight:500;color:var(--ink2);flex:1}
+.asp-btns{display:flex;gap:4px}
+.asp-btn{border:1.5px solid var(--border);background:var(--white);color:var(--ink3);border-radius:20px;padding:4px 10px;font-size:.78rem;font-weight:600;cursor:pointer;transition:.15s;font-family:var(--font)}
+.asp-btn:hover{border-color:var(--red);color:var(--red)}
+.asp-btn.sel{background:var(--red);border-color:var(--red);color:#fff}
+.asp-btn.dis{background:#f4f4f4;color:#ccc;cursor:default;border-color:#eee}
+.ficha-footer{background:#fafaf8;border-top:1px solid #f0ede8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.prom-label{font-size:.78rem;color:var(--ink3);font-weight:500}
+.prom-val{font-family:var(--font-h);font-size:2rem;font-weight:700;color:var(--ink);line-height:1}
+.prom-val.good{color:var(--green)}
+.prom-val.bad{color:var(--red)}
+.prom-val.pend{color:var(--ink4)}
+
+/* CONCENTRADOR TABLE */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+thead tr{background:var(--ink);color:#fff}
+thead th{padding:9px 11px;text-align:left;font-weight:500;white-space:nowrap}
+tbody tr:nth-child(even){background:#fafafa}
+tbody tr:hover{background:var(--red-l)}
+tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:600}
+.b-apr{background:var(--green-bg);color:var(--green)}
+.b-no{background:var(--red-l);color:var(--red)}
+.b-pend{background:#f0f0f0;color:var(--ink3)}
+.b-prom{background:var(--gold-l);color:var(--gold)}
+.stat-row{display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.stat-c{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px 18px;flex:1;min-width:100px;text-align:center}
+.stat-c .sv{font-size:1.5rem;font-weight:700}
+.stat-c .sl{font-size:.75rem;color:var(--ink3);margin-top:2px}
+
+/* CONFIG GRID */
+.cg-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.cg{display:grid;grid-template-columns:130px repeat(6,1fr);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:.83rem;min-width:560px}
+.cg-h{background:var(--ink);color:#fff;padding:7px 8px;text-align:center;font-weight:500;border-right:1px solid rgba(255,255,255,.1)}
+.cg-h:last-child{border-right:none}
+.cg-rl{background:#f8f6f1;padding:7px 10px;font-weight:500;border-top:1px solid var(--border);border-right:1px solid var(--border)}
+.cg-cell{display:flex;align-items:center;justify-content:center;border-top:1px solid var(--border);border-right:1px solid var(--border);padding:5px}
+.cg-cell:last-child{border-right:none}
+.cg-cell input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--red)}
+
+/* CÍRCULO DE CINTA */
+.cinta{width:36px;height:36px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,.15);position:relative;overflow:hidden}
+.cinta-inner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;border:1.5px solid rgba(0,0,0,.15)}
+
+/* FICHA COLAPSABLE */
+.ficha-head{cursor:pointer;user-select:none}
+.ficha-head:hover{filter:brightness(1.15)}
+
+/* KATA BADGE */
+.kata-badge{font-size:.72rem;font-weight:600;color:#b8860b;letter-spacing:.02em;margin-top:3px}
+
+/* OBSERVACIONES */
+.obs-toggle{width:100%;background:none;border:none;border-top:1px solid #f0ede8;padding:8px 16px;text-align:left;font-family:var(--font);font-size:.76rem;font-weight:600;color:var(--ink3);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s}
+.obs-toggle:hover{background:#f8f6f1}
+.obs-toggle-icon{font-size:.65rem;transition:transform .2s;margin-left:auto}
+.obs-body{overflow:hidden;max-height:0;transition:max-height .25s ease, padding .25s ease;padding:0 16px}
+.obs-body.open{max-height:300px;padding:10px 16px}
+.obs-textarea{width:100%;border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:var(--font);font-size:.83rem;resize:vertical;min-height:72px;color:var(--ink);background:#fafaf8;outline:none;transition:border-color .15s}
+.obs-textarea:focus{border-color:var(--gold);background:#fff}
+.ficha-body{transition:max-height .25s ease, opacity .25s ease, padding .25s ease;overflow:hidden;max-height:600px;opacity:1}
+.ficha.collapsed .ficha-body{max-height:0;opacity:0;padding-top:0;padding-bottom:0}
+.ficha.collapsed .ficha-footer{border-top:none}
+.ficha-toggle-icon{font-size:.7rem;opacity:.6;margin-left:6px;transition:transform .25s}
+.ficha.collapsed .ficha-toggle-icon{transform:rotate(-90deg)}
+
+/* DESTACADOS */
+.destacados-grid{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1rem}
+.dest-card{background:var(--white);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:14px 18px;display:flex;align-items:center;gap:14px;min-width:220px;flex:1}
+.dest-medal{font-size:1.6rem;line-height:1;flex-shrink:0}
+.dest-info{display:flex;flex-direction:column;gap:2px;flex:1}
+.dest-nombre{font-family:var(--font-h);font-size:.95rem;font-weight:700;color:var(--ink)}
+.dest-grado{font-size:.76rem;color:var(--ink3)}
+.dest-prom{font-family:var(--font-h);font-size:1.5rem;font-weight:700;color:var(--green);margin-left:auto}
+
+/* SINODALES TABLE */
+.sin-table{width:100%;border-collapse:collapse;font-size:.86rem;margin-bottom:1rem}
+.sin-table th{background:var(--bg);padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border)}
+.sin-table td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+.sin-table input[type=text]{border:1px solid var(--border);border-radius:5px;padding:5px 8px;width:100%;font-family:var(--font);font-size:.84rem}
+</style>
+</head>
+<body>
+  <div id="login-screen" class="login-screen">
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:20px;width:320px">
+
+    <div style="text-align:center">
+      <div style="font-family:var(--font-h);font-size:1.1rem;color:rgba(255,255,255,.75);letter-spacing:.05em;margin-bottom:12px">Sistema de Evaluaciones</div>
+      <img src="https://raw.githubusercontent.com/americordzn-karate/retos/17eba3e9c50358ded081c3fe44bf64e6db2745ee/Escudo%20Circulo%20PNG.png" alt="Escudo Senshi-Kan" style="width:90px;height:90px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.4))"/>
+    </div>
+
+  <div class="login-box">
+
+    <h2>
+      Acceso de Sinodales
+    </h2>
+
+    <!-- Campo token: input único real, enmascarado con 🥷🏼 vía JS -->
+    <input
+      id="token-real"
+      type="text"
+      placeholder="Ingrese su token Senshi-Kan"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="none"
+      spellcheck="false"
+      inputmode="text"
+      style="padding:14px;border-radius:10px;border:1px solid #ccc;font-size:1.4rem;width:100%;box-sizing:border-box;letter-spacing:4px;outline:none;transition:border-color .2s,box-shadow .2s;font-family:monospace;"
+      onfocus="this.style.borderColor='#111827';this.style.boxShadow='0 0 0 3px rgba(17,24,39,0.12)'"
+      onblur="this.style.borderColor='#ccc';this.style.boxShadow='none'"
+      onkeydown="if(event.key==='Enter') loginToken()"
+    />
+    <input id="token-input" type="hidden" />
+
+    <button onclick="loginToken()">
+      Entrar
+    </button>
+
+    <!-- Barra de progreso -->
+    <div id="login-progress-wrap" style="display:none;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden">
+      <div id="login-progress-bar" style="height:100%;width:0%;background:#b8860b;border-radius:3px;transition:width .3s ease"></div>
+    </div>
+
+    <div id="login-msg"></div>
+
+  </div>
+
+  </div>
+
+</div>
+
+<header class="topbar">
+  <div class="brand"><img src="https://raw.githubusercontent.com/americordzn-karate/retos/17eba3e9c50358ded081c3fe44bf64e6db2745ee/Escudo%20Circulo%20PNG.png" alt="Escudo" style="width:32px;height:32px;object-fit:contain"/><span style="margin-left:8px">Sistema de Evaluaciones Senshi-Kan</span></div>
+  <nav class="tnav" id="tnav">
+    <button id="nb-principal" onclick="showView('v-principal')" style="display:none">🪪</button>
+    <button id="nb-alumnos" onclick="showView('v-alumnos')" style="display:none">🥋</button>
+    <button id="nb-config" onclick="showView('v-config')" style="display:none">⚙️</button>
+  </nav>
+</header>
+
+<div id="banner-usuario">
+  <div class="banner-inner">
+    <div class="banner-texto">
+      <span class="banner-saludo">Bienvenid@</span>
+      <span class="banner-nombre" id="banner-nombre"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     VIEW: EVAL  — hoja del sinodal actual
+═══════════════════════════════════════════ -->
+<section class="view on" id="v-eval">
+  <h2 class="stitle">Hoja de evaluación</h2>
+  <div class="gtabs">
+    <button class="gtab on" onclick="switchGrupo('eval','A',this)">Grupo A</button>
+    <button class="gtab"    onclick="switchGrupo('eval','B',this)">Grupo B</button>
+  </div>
+  <div id="eval-wrap"><div class="loader">Configure la URL y seleccione su rol para comenzar.</div></div>
+  <div class="btn-row" id="eval-btns" style="display:none">
+    <button class="btn btn-red" onclick="guardarCals('eval')">💾 Guardar calificaciones</button>
+    <button class="btn btn-ghost" onclick="cargarEval()">🔄 Recargar</button>
+  </div>
+
+  <hr class="div"/>
+  <h2 class="stitle">🏅 EXÁMENES DESTACADOS</h2>
+  <div class="gtabs" id="dest-eval-tabs">
+    <button class="gtab on" onclick="switchDestacados('eval','A',this)">Grupo A</button>
+    <button class="gtab"    onclick="switchDestacados('eval','B',this)">Grupo B</button>
+  </div>
+  <div id="destacados-eval-wrap"><div class="loader">Cargando…</div></div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     VIEW: PRINCIPAL  — eval + concentrador
+═══════════════════════════════════════════ -->
+<section class="view" id="v-principal">
+  <h2 class="stitle">Hoja de evaluación</h2>
+  <div class="gtabs">
+    <button class="gtab on" onclick="switchGrupo('prin','A',this)">Grupo A</button>
+    <button class="gtab"    onclick="switchGrupo('prin','B',this)">Grupo B</button>
+  </div>
+  <div id="prin-wrap"><div class="loader">Cargando…</div></div>
+  <div class="btn-row">
+    <button class="btn btn-red" onclick="guardarCals('prin')">💾 Guardar calificaciones</button>
+    <button class="btn btn-ghost" onclick="cargarPrincipal()">🔄 Recargar</button>
+  </div>
+
+  <hr class="div"/>
+  <h2 class="stitle">🏅 EXÁMENES DESTACADOS</h2>
+  <div class="gtabs" id="dest-prin-tabs">
+    <button class="gtab on" onclick="switchDestacados('prin','A',this)">Grupo A</button>
+    <button class="gtab"    onclick="switchDestacados('prin','B',this)">Grupo B</button>
+  </div>
+  <div id="destacados-prin-wrap"><div class="loader">Cargando…</div></div>
+
+  <hr class="div"/>
+  <h2 class="stitle">Concentrador</h2>
+  <div class="gtabs">
+    <button class="gtab on" onclick="switchGrupo('conc','A',this)">Grupo A</button>
+    <button class="gtab"    onclick="switchGrupo('conc','B',this)">Grupo B</button>
+  </div>
+  <div class="card tbl-wrap" id="conc-wrap"><div class="loader">Cargando…</div></div>
+  <div class="btn-row">
+    <button class="btn btn-ghost" onclick="cargarConcentrador()">🔄 Actualizar concentrador</button>
+    <button class="btn btn-dark" onclick="generarPDFConcentrador()">📄 Exportar PDF</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     VIEW: ALUMNOS
+═══════════════════════════════════════════ -->
+<section class="view" id="v-alumnos">
+  <h2 class="stitle">Agregar Alumno</h2>
+  <div class="card" style="margin-bottom:1.25rem">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+      <div style="display:flex;flex-direction:column;gap:4px;flex:2;min-width:180px">
+        <label style="font-size:.78rem;font-weight:600;color:var(--ink2)">Nombre</label>
+        <input id="nuevo-nombre" type="text" placeholder="NOMBRE DEL ALUMNO"
+          style="border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;text-transform:uppercase"
+          oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:110px">
+        <label style="font-size:.78rem;font-weight:600;color:var(--ink2)">Grado (Kyu)</label>
+        <select id="nuevo-grado"
+          style="border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;background:var(--white)">
+          <option value="">-- Grado --</option>
+          <option value="10 Kyu">10</option>
+          <option value="9 Kyu">9</option>
+          <option value="8 Kyu">8</option>
+          <option value="7 Kyu">7</option>
+          <option value="6 Kyu">6</option>
+          <option value="5 Kyu">5</option>
+          <option value="4 Kyu">4</option>
+          <option value="3 Kyu">3</option>
+          <option value="2 Kyu">2</option>
+          <option value="1 Kyu">1</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:110px">
+        <label style="font-size:.78rem;font-weight:600;color:var(--ink2)">Grupo</label>
+        <select id="nuevo-grupo"
+          style="border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;background:var(--white)">
+          <option value="A">Grupo A</option>
+          <option value="B">Grupo B</option>
+        </select>
+      </div>
+      <button class="btn btn-red" onclick="agregarAlumno()" style="height:40px;align-self:flex-end">
+        ＋ Agregar
+      </button>
+    </div>
+  </div>
+
+  <h2 class="stitle">Listado General de Alumnos</h2>
+  <div class="gtabs">
+    <button class="gtab on" onclick="switchGrupo('alum','A',this)">Grupo A</button>
+    <button class="gtab"    onclick="switchGrupo('alum','B',this)">Grupo B</button>
+  </div>
+  <div class="card tbl-wrap" id="alum-wrap"><div class="loader">Cargando…</div></div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     VIEW: CONFIG
+═══════════════════════════════════════════ -->
+<section class="view" id="v-config">
+  <h2 class="stitle">Sinodales</h2>
+  <div class="card">
+    <p style="font-size:.84rem;color:var(--ink3);margin-bottom:.75rem">Defina los sinodales. El Sinodal Principal tiene número 0 y acceso a todo. Los demás solo ven su propia hoja.</p>
+    <table class="sin-table" id="sin-tbl">
+      <thead><tr><th style="width:70px">#</th><th>Nombre</th><th>Token</th><th style="width:50px"></th></tr></thead>
+      <tbody id="sin-tbody"></tbody>
+    </table>
+    <button class="btn btn-ghost" onclick="addSinodalRow()">＋ Agregar sinodal</button>
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="guardarSinodales()">💾 Guardar sinodales</button>
+    </div>
+  </div>
+
+  <h2 class="stitle">Aspectos por grado</h2>
+  <div class="card">
+    <div class="cg-wrap">
+    <div class="cg" id="cg">
+      <div class="cg-h">Grado</div>
+      <div class="cg-h">Kata</div>
+      <div class="cg-h">Bunkai</div>
+      <div class="cg-h">Téc. Básica</div>
+      <div class="cg-h">Kumite</div>
+      <div class="cg-h">Teoría</div>
+      <div class="cg-h">Kata a Realizar</div>
+    </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="guardarConfig()">💾 Guardar configuración</button>
+      <button class="btn btn-dark" onclick="inicializar()">🗂 Inicializar hojas en Sheets</button>
+      <button class="btn btn-ghost" onclick="cargarConfig()">🔄 Recargar</button>
+    </div>
+  </div>
+
+  <h2 class="stitle" style="color:var(--red)">⚠️ Zona de peligro</h2>
+  <div class="card" style="border-color:#f5c6c2">
+    <p style="font-size:.84rem;color:var(--ink3);margin-bottom:.75rem">Borra todas las calificaciones de los sinodales y los concentradores. <strong>El listado de alumnos no se verá afectado.</strong> Esta acción no puede deshacerse.</p>
+    <button class="btn btn-red" onclick="confirmarResetExamen()">🗑️ Limpiar calificaciones para nuevo examen</button>
+  </div>
+</section>
+
+
+<!-- MODAL CONFIRMACIÓN RESET -->
+<div id="modal-reset" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:28px 30px;width:340px;box-shadow:0 10px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:16px">
+    <div style="font-family:var(--font-h);font-size:1.1rem;color:var(--red);font-weight:700">¿Confirmar limpieza?</div>
+    <p style="font-size:.86rem;color:var(--ink2);line-height:1.5">Se eliminarán <strong>todas las calificaciones</strong> de todos los sinodales y los concentradores. El listado de alumnos se conservará intacto.</p>
+    <p style="font-size:.82rem;color:var(--ink3)">Esta acción <strong>no puede deshacerse</strong>.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="cerrarModalReset()">Cancelar</button>
+      <button class="btn btn-red" id="btn-reset-confirm" onclick="ejecutarResetExamen()">🗑️ Sí, limpiar todo</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  CONSTANTES Y ESTADO
+// ══════════════════════════════════════════
+const API_DEFAULT = "https://script.google.com/macros/s/AKfycby5TZOYesefauZ_OaBFtYtwaZLpiqLFKxouxctiDOcjgakYRd--birOiIatJPUTV7Wgrg/exec";
+const ASPECTOS    = ["Kata","Bunkai","Tecnica Basica","Kumite","Teoria"];
+const ASP_LABEL   = ["Kata","Bunkai","T. Básica","Kumite","Teoría"];
+const GRADOS      = ["10 Kyu","9 Kyu","8 Kyu","7 Kyu","6 Kyu","5 Kyu","4 Kyu","3 Kyu","2 Kyu","1 Kyu"];
+const ESCALA      = ["M","R","B","MB","E"];
+const VALS        = {M:6,R:7,B:8,MB:9,E:10};
+
+let API_URL    = localStorage.getItem("k_api") || API_DEFAULT;
+let rolNum     = null;   // null=sin rol, 0=principal, N=sinodal N
+  let tokenActual = "";
+
+let usuarioActual = null;
+let config     = null;
+let sinodales  = [];
+
+
+
+// buffers de calificaciones en memoria
+// buf[contexto][grupo][numAlumno][aspecto] = "M"|"R"|...
+const buf = { eval:{A:{},B:{}}, prin:{A:{},B:{}} };
+const alumnos = { A:[], B:[] };
+
+// grupos activos por contexto
+const gActivo = { eval:"A", prin:"A", conc:"A", alum:"A", destEval:"A", destPrin:"A" };
+
+// ══════════════════════════════════════════
+//  CÍRCULO DE CINTA POR GRADO
+// ══════════════════════════════════════════
+const CINTA_COLORES = {
+  "10 Kyu": { bg: "#ffffff" },
+  "9 Kyu":  { bg: "#ffffff", inner: "#f5d000" },
+  "8 Kyu":  { bg: "#f5d000" },
+  "7 Kyu":  { bg: "#f5831f" },
+  "6 Kyu":  { bg: "#2e8b3a" },
+  "5 Kyu":  { bg: "#2e8b3a", inner: "#1a5fa8" },
+  "4 Kyu":  { bg: "#1a5fa8" },
+  "3 Kyu":  { bg: "#1a5fa8", inner: "#c0392b" },
+  "2 Kyu":  { bg: "#6b3a1f" },
+  "1 Kyu":  { bg: "#6b3a1f", inner: "#111111" }
+};
+
+function cintaHTML(grado) {
+  const c = CINTA_COLORES[grado] || { bg: "#cccccc" };
+  const inner = c.inner
+    ? `<div class="cinta-inner" style="background:${c.inner}"></div>`
+    : "";
+  return `<div class="cinta" style="background:${c.bg}" title="${grado}">${inner}</div>`;
+}
+
+// ══════════════════════════════════════════
+
+async function iniciarSistema(){
+
+  aplicarRol();
+
+}
+
+  function aplicarPermisos(){
+
+  const esAdmin      = parseInt(rolNum,10) === 0;
+  const esEspectador = parseInt(rolNum,10) < 0;
+
+  const sel = document.getElementById("rol-sel");
+  if(sel){
+    sel.value    = rolNum;
+    sel.disabled = true;
+  }
+
+  const adminTabs = document.querySelectorAll(".admin-only");
+  adminTabs.forEach(el=>{
+    el.style.display = esAdmin ? "" : "none";
+  });
+
+  // El espectador no ve la vista de eval ni sus botones
+  if (esEspectador) {
+    document.getElementById("eval-btns").style.display = "none";
+  }
+}
+  
+// ══════════════════════════════════════════
+
+// El sistema iniciará después del login
+
+async function conectar() {
+  try {
+    const r = await get("getConfig");
+    config = r;
+    const sr = await get("getSinodales");
+    sinodales = sr.sinodales || [];
+  } catch(e) {
+    toast("No se pudo conectar con el Apps Script.", true);
+  }
+}
+
+
+
+function aplicarRol() {
+
+  const esPrincipal  = parseInt(rolNum, 10) === 0;
+  const esEspectador = parseInt(rolNum, 10) < 0;
+
+  document.getElementById("nb-principal").style.display = esPrincipal ? "" : "none";
+  document.getElementById("nb-alumnos").style.display   = (esPrincipal || esEspectador) ? "" : "none";
+  document.getElementById("nb-config").style.display    = esPrincipal ? "" : "none";
+
+  if (esPrincipal) {
+    document.getElementById("eval-btns").style.display = "none";
+    showView("v-principal");
+    cargarPrincipal();
+    cargarConcentrador();
+    cargarConfig();
+    cargarAlumnos();
+    cargarDestacados("destacados-prin-wrap", gActivo.destPrin);
+  } else if (esEspectador) {
+    // Solo acceso al listado de alumnos, sin botones de eval
+    document.getElementById("eval-btns").style.display = "none";
+    showView("v-alumnos");
+    cargarAlumnos();
+  } else {
+    // Sinodal normal
+    document.getElementById("eval-btns").style.display = "flex";
+    showView("v-eval");
+    cargarEval();
+    cargarDestacados("destacados-eval-wrap", gActivo.destEval);
+  }
+}
+// ══════════════════════════════════════════
+//  NAVEGACIÓN
+// ══════════════════════════════════════════
+function showView(id) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
+  document.getElementById(id).classList.add("on");
+  document.querySelectorAll(".tnav button").forEach(b => b.classList.remove("on"));
+  const map = {"v-principal":"nb-principal","v-alumnos":"nb-alumnos","v-config":"nb-config"};
+  const btn = document.getElementById(map[id]);
+  if (btn) btn.classList.add("on");
+}
+
+function switchGrupo(ctx, g, btn) {
+  btn.closest(".gtabs").querySelectorAll(".gtab").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  gActivo[ctx] = g;
+  if (ctx === "eval")  cargarEval();
+  if (ctx === "prin")  cargarPrincipal();
+  if (ctx === "conc")  cargarConcentrador();
+  if (ctx === "alum")  cargarAlumnos();
+}
+
+// ══════════════════════════════════════════
+//  API
+// ══════════════════════════════════════════
+async function get(action, params={}) {
+  const qs = Object.entries({action,...params}).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join("&");
+  const res = await fetch(`${API_URL}?${qs}`, {
+  method: "GET",
+  mode: "cors"
+});
+  const txt = await res.text();
+  let json;
+  try { json = JSON.parse(txt); } catch(e) { throw new Error("Respuesta inválida del servidor"); }
+  if (json.error) throw new Error(json.error);
+  return json;
+}
+
+async function post(action, params={}, payload=null) {
+  // Enviamos todo por GET con payload codificado para evitar CORS
+  const p = {...params, action};
+  if (payload !== null) p.payload = encodeURIComponent(JSON.stringify(payload));
+  const qs = Object.entries(p).map(([k,v])=>`${k}=${v}`).join("&");
+  const res = await fetch(`${API_URL}?${qs}`, {
+  method: "POST",
+  mode: "cors"
+});
+  const txt = await res.text();
+  let json;
+  try { json = JSON.parse(txt); } catch(e) { throw new Error("Respuesta inválida del servidor"); }
+  if (json.error) throw new Error(json.error);
+  return json;
+}
+
+// ══════════════════════════════════════════
+//  CARGA Y RENDER DE FICHAS
+// ══════════════════════════════════════════
+async function cargarEval() {
+  if (rolNum === null) return;
+  if (parseInt(rolNum, 10) < 0) return; // espectador no tiene eval
+  const grupo = gActivo.eval;
+  const wrap  = document.getElementById("eval-wrap");
+  wrap.innerHTML = '<div class="loader">Cargando alumnos…</div>';
+  try {
+    config = await get("getConfig");
+    const ar = await get("getAlumnos", {grupo});
+    const cr = await get("getCalificaciones", {sinodal: rolNum, grupo});
+    alumnos[grupo] = ar.alumnos || [];
+    buf.eval[grupo] = cr.calificaciones || {};
+    wrap.innerHTML = buildFichas(alumnos[grupo], buf.eval[grupo], config, "eval", grupo);
+  } catch(e) {
+    wrap.innerHTML = `<div class="loader err">Error: ${e.message}</div>`;
+  }
+}
+
+async function cargarPrincipal() {
+  const grupo = gActivo.prin;
+  const wrap  = document.getElementById("prin-wrap");
+  wrap.innerHTML = '<div class="loader">Cargando…</div>';
+  try {
+    config = await get("getConfig");
+    const ar = await get("getAlumnos", {grupo});
+    const cr = await get("getCalificaciones", {sinodal: 0, grupo});
+    alumnos[grupo] = ar.alumnos || [];
+    buf.prin[grupo] = cr.calificaciones || {};
+    wrap.innerHTML = buildFichas(alumnos[grupo], buf.prin[grupo], config, "prin", grupo);
+  } catch(e) {
+    wrap.innerHTML = `<div class="loader err">Error: ${e.message}</div>`;
+  }
+}
+
+function buildFichas(lista, cals, cfg, ctx, grupo) {
+  if (!lista.length) return '<div class="loader">Sin alumnos presentes en este grupo.</div>';
+  const apg = (cfg && cfg.aspectosPorGrado) || {};
+  let html = '<div class="fichas-grid">';
+  lista.forEach(al => {
+    if(ctx !== "alum" && al.presente === false){
+  return;
+}
+    const num     = al.numero.toString();
+    const activos =
+  apg[al.grado] ||
+  apg[al.grado.trim()] ||
+  {};
+    const calRow  = cals[num] || {};
+    html += fichaHTML(al, activos, calRow, ctx, grupo);
+  });
+  html += '</div>';
+  return html;
+}
+
+function fichaHTML(al, activos, calRow, ctx, grupo) {
+  const num = al.numero.toString();
+  const kpg = (config && config.katasPorGrado) || {};
+  const kataTexto = kpg[al.grado] ? `Kata: ${kpg[al.grado]}` : "";
+  let html = `
+  <div class="ficha collapsed" id="ficha-${ctx}-${grupo}-${num}">
+    <div class="ficha-head" onclick="toggleFicha(this)">
+      <div>
+        <div class="fn">${al.nombre}<span class="ficha-toggle-icon">▼</span></div>
+        <div class="fg">${al.grado}</div>
+        ${kataTexto ? `<div class="kata-badge">${kataTexto}</div>` : ""}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${cintaHTML(al.grado)}
+        <div class="ficha-num">#${al.numero}</div>
+      </div>
+    </div>
+    <div class="ficha-body">`;
+
+  ASPECTOS.forEach((asp, i) => {
+    const activo = activos[asp] === true;
+    const sel    = calRow[asp] || "";
+    html += `<div class="aspecto-row">
+      <span class="asp-label">${ASP_LABEL[i]}</span>
+      <div class="asp-btns">`;
+
+    if (!activo) {
+      html += `<span style="font-size:.78rem;color:var(--ink4)">N/A</span>`;
+    } else {
+      ESCALA.forEach(e => {
+        html += `<button class="asp-btn${sel===e?' sel':''}"
+          data-ctx="${ctx}" data-grupo="${grupo}" data-num="${num}" data-asp="${asp}" data-val="${e}"
+          onclick="selCal(this)">${e}</button>`;
+      });
+    }
+    html += `</div></div>`;
+  });
+
+  const prom = calcProm(al, activos, calRow);
+  const cls  = prom==="—" ? "pend" : (parseFloat(prom)>=7 ? "good" : "bad");
+  const obsVal = (calRow["Observaciones"] || "").replace(/"/g, "&quot;");
+
+  html += `</div>
+    <div class="ficha-footer">
+      <span class="prom-label">Promedio</span>
+      <span class="prom-val ${cls}" id="prom-${ctx}-${grupo}-${num}">${prom}</span>
+    </div>
+    <button class="obs-toggle" onclick="toggleObs(this)" type="button">
+      📝 Observaciones <span class="obs-toggle-icon">▶</span>
+    </button>
+    <div class="obs-body">
+      <textarea class="obs-textarea"
+        data-ctx="${ctx}" data-grupo="${grupo}" data-num="${num}"
+        placeholder="Escriba sus observaciones aquí…"
+        oninput="autoGuardarObs(this)">${obsVal}</textarea>
+    </div>
+  </div>`;
+  return html;
+}
+
+async function selCal(btn) {
+
+  const {ctx, grupo, num, asp, val} = btn.dataset;
+
+  // Crear buffer si no existe
+  if (!buf[ctx][grupo][num]) {
+    buf[ctx][grupo][num] = {};
+  }
+
+  // Toggle
+  const actual = buf[ctx][grupo][num][asp];
+
+  buf[ctx][grupo][num][asp] =
+    (actual === val) ? "" : val;
+
+  const nuevo = buf[ctx][grupo][num][asp];
+
+  // Actualizar visualmente botones
+  btn.closest(".asp-btns")
+    .querySelectorAll(".asp-btn")
+    .forEach(b => {
+
+      b.classList.toggle(
+        "sel",
+        b.dataset.val === nuevo && nuevo !== ""
+      );
+
+    });
+
+  // Recalcular promedio visual
+  const lista = alumnos[grupo];
+
+  const al = lista.find(
+    a => a.numero.toString() === num
+  );
+
+  if (!al || !config) return;
+
+  const activos =
+    (config.aspectosPorGrado[al.grado]) || {};
+
+  const prom = calcProm(
+    al,
+    activos,
+    buf[ctx][grupo][num]
+  );
+
+  const el = document.getElementById(
+    `prom-${ctx}-${grupo}-${num}`
+  );
+
+  if (el) {
+
+    el.textContent = prom;
+
+    el.className =
+      "prom-val " +
+      (
+        prom === "—"
+          ? "pend"
+          : parseFloat(prom) >= 7
+            ? "good"
+            : "bad"
+      );
+
+  }
+
+  // =========================
+  // GUARDADO AUTOMÁTICO
+  // =========================
+
+  try {
+
+    const sinodal =
+      ctx === "eval"
+        ? rolNum
+        : 0;
+
+    await post(
+      "saveCalificaciones",
+      {
+        sinodal,
+        grupo
+      },
+      buf[ctx][grupo]
+    );
+
+    // Actualizar concentrador y destacados automáticamente
+    if (ctx === "eval") {
+      await cargarConcentrador();
+      cargarDestacados("destacados-eval-wrap", gActivo.destEval);
+    } else {
+      cargarDestacados("destacados-prin-wrap", gActivo.destPrin);
+    }
+
+  } catch(e) {
+
+    toast(
+      "Error guardando calificación",
+      true
+    );
+
+    console.error(e);
+
+  }
+
+}
+
+function calcProm(al, activos, calRow) {
+  const nums = [];
+  ASPECTOS.forEach(asp => {
+    if (activos[asp] && calRow[asp] && VALS[calRow[asp]]) nums.push(VALS[calRow[asp]]);
+  });
+  if (!nums.length) return "—";
+  return (nums.reduce((a,b)=>a+b,0)/nums.length).toFixed(2);
+}
+
+// ══════════════════════════════════════════
+//  GUARDAR CALIFICACIONES
+// ══════════════════════════════════════════
+async function guardarCals(ctx) {
+  const grupo   = ctx === "eval" ? gActivo.eval : gActivo.prin;
+  const sinodal = ctx === "eval" ? rolNum : 0;
+  try {
+    await post("saveCalificaciones", {sinodal, grupo}, buf[ctx][grupo]);
+    toast("Calificaciones guardadas ✓");
+  } catch(e) {
+    toast("Error: " + e.message, true);
+  }
+}
+
+// ══════════════════════════════════════════
+//  CONCENTRADOR
+// ══════════════════════════════════════════
+async function cargarConcentrador() {
+  const grupo = gActivo.conc;
+  const wrap  = document.getElementById("conc-wrap");
+  wrap.innerHTML = '<div class="loader">Cargando…</div>';
+  try {
+    const r = await get("getConcentrador", {grupo});
+    wrap.innerHTML = buildConcentrador(r.concentrador || []);
+  } catch(e) {
+    wrap.innerHTML = `<div class="loader err">Error: ${e.message}</div>`;
+  }
+}
+
+function buildConcentrador(rows) {
+  if (!rows.length) return '<div class="loader">Sin datos aún.</div>';
+  let apr=0,no=0,pend=0;
+  rows.forEach(r => {
+    if (r.Resultado==="APROBADO") apr++;
+    else if (r.Resultado==="NO APROBADO") no++;
+    else pend++;
+  });
+  let h = `<div class="stat-row">
+    <div class="stat-c"><div class="sv">${rows.length}</div><div class="sl">Total</div></div>
+    <div class="stat-c"><div class="sv" style="color:var(--green)">${apr}</div><div class="sl">Aprobados</div></div>
+    <div class="stat-c"><div class="sv" style="color:var(--red)">${no}</div><div class="sl">No aprobados</div></div>
+    <div class="stat-c"><div class="sv" style="color:var(--gold)">${pend}</div><div class="sl">Pendientes</div></div>
+  </div>
+  <table><thead><tr><th>#</th><th>Nombre</th><th>Grado</th>`;
+  ASPECTOS.forEach(a => { h += `<th>${a}</th>`; });
+  h += `<th>Promedio</th><th>Resultado</th><th>Observaciones</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    const pf  = r["Promedio Final"];
+    const res = r["Resultado"];
+    const rb  = !res ? `<span class="badge b-pend">Pendiente</span>`
+              : res==="APROBADO" ? `<span class="badge b-apr">APROBADO</span>`
+              : `<span class="badge b-no">NO APROBADO</span>`;
+    const obs = (r["Observaciones"] || "").replace(/\n/g, "<br>");
+    h += `<tr><td>${r.Numero||""}</td><td>${r.Nombre||""}</td><td>${r.Grado||""}</td>`;
+    ASPECTOS.forEach(a => { h += `<td>${r[a]||"—"}</td>`; });
+    h += `<td><span class="badge b-prom">${pf||"—"}</span></td><td>${rb}</td><td style="font-size:.78rem;color:var(--ink2);white-space:pre-wrap;max-width:200px">${obs}</td></tr>`;
+  });
+  h += `</tbody></table>`;
+  return h;
+}
+
+// ══════════════════════════════════════════
+//  ALUMNOS
+// ══════════════════════════════════════════
+
+async function cargarAlumnos() {
+
+  const grupo = gActivo.alum;
+
+  const wrap = document.getElementById("alum-wrap");
+
+  wrap.innerHTML = '<div class="loader">Cargando…</div>';
+
+  try {
+
+    const r = await get("getAlumnos", {grupo});
+
+    const list = r.alumnos || [];
+
+    if (!list.length) {
+
+      wrap.innerHTML =
+        '<div class="loader">Sin alumnos presentes.</div>';
+
+      return;
+
+    }
+
+    let html = '<div class="fichas-grid">';
+
+    list.forEach(a => {
+
+      html += `
+      <div class="ficha">
+
+        <div class="ficha-head">
+
+          <div>
+            <div class="fn">${a.nombre}</div>
+            <div class="fg">${a.grado}</div>
+            ${(config && config.katasPorGrado && config.katasPorGrado[a.grado]) ? `<div class="kata-badge">Kata: ${config.katasPorGrado[a.grado]}</div>` : ""}
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px">
+            ${cintaHTML(a.grado)}
+            <div class="ficha-num">#${a.numero}</div>
+          </div>
+
+        </div>
+
+        <div class="ficha-body">
+
+          <label style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:.9rem;
+            font-weight:600;
+          ">
+
+            <input
+              type="checkbox"
+              ${a.presente !== false ? "checked" : ""}
+              onchange="toggleAsistencia(
+                '${grupo}',
+                '${a.numero}',
+                this.checked
+              )"
+            />
+
+            Presente
+
+          </label>
+
+        </div>
+
+      </div>`;
+    });
+
+    html += '</div>';
+
+    wrap.innerHTML = html;
+
+  } catch(e) {
+
+    wrap.innerHTML =
+      `<div class="loader err">
+        Error: ${e.message}
+      </div>`;
+  }
+
+}
+
+
+// ══════════════════════════════════════════
+//  CONFIGURACIÓN — SINODALES
+// ══════════════════════════════════════════
+async function cargarConfig() {
+  try {
+    const cr = await get("getConfig");
+    config = cr;
+    const sr = await get("getSinodales");
+    sinodales = sr.sinodales || [];
+    buildCG(config);
+    buildSinodalesTable(sinodales);
+  } catch(e) {
+    toast("Error al cargar configuración: " + e.message, true);
+  }
+}
+
+function buildSinodalesTable(lista) {
+  const tbody = document.getElementById("sin-tbody");
+  tbody.innerHTML = "";
+  lista.forEach(s => addSinodalRow(s));
+}
+
+function addSinodalRow(s) {
+  const tbody = document.getElementById("sin-tbody");
+  const idx   = tbody.rows.length + 1;
+  const data  = s || {numero: idx, nombre:"", url:""};
+  const tr    = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" value="${data.numero}" style="width:50px" placeholder="#"/></td>
+    <td><input type="text" value="${data.nombre}" placeholder="Nombre del sinodal"/></td>
+    <td><input type="text" value="${data.url||''}" placeholder="https://…"/></td>
+    <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:.8rem" onclick="this.closest('tr').remove()">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+async function guardarSinodales() {
+
+  const rows = document.querySelectorAll("#sin-tbody tr");
+
+  const lista = [];
+
+  rows.forEach(tr => {
+
+    const inputs = tr.querySelectorAll("input");
+
+    const num = inputs[0].value.trim();
+
+    const nom = inputs[1].value.trim();
+
+    const url = inputs[2].value.trim();
+
+    if (nom) {
+      lista.push({
+        numero: num !== "" ? parseInt(num) : lista.length + 1,
+        nombre: nom,
+        url
+      });
+    }
+
+  });
+
+  try {
+
+    await post("saveSinodales", {}, lista);
+
+    sinodales = lista;
+
+    toast("Sinodales guardados ✓");
+
+
+
+  } catch (e) {
+
+    toast("Error: " + e.message, true);
+
+  }
+
+}
+
+// ══════════════════════════════════════════
+//  CONFIGURACIÓN — ASPECTOS POR GRADO
+// ══════════════════════════════════════════
+function buildCG(cfg) {
+  const cg  = document.getElementById("cg");
+  const apg = (cfg && cfg.aspectosPorGrado) || {};
+  const kpg = (cfg && cfg.katasPorGrado)    || {};
+  // limpiar filas previas (mantener 7 cabeceras)
+  while (cg.children.length > 7) cg.removeChild(cg.lastChild);
+  GRADOS.forEach(g => {
+    const lbl = document.createElement("div");
+    lbl.className = "cg-rl"; lbl.textContent = g;
+    cg.appendChild(lbl);
+    ASPECTOS.forEach(a => {
+      const cell = document.createElement("div");
+      cell.className = "cg-cell";
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.checked = apg[g] && apg[g][a] === true;
+      chk.dataset.g = g; chk.dataset.a = a;
+      cell.appendChild(chk);
+      cg.appendChild(cell);
+    });
+    // Columna Kata_Realiza
+    const cellK = document.createElement("div");
+    cellK.className = "cg-cell";
+    cellK.style.padding = "4px 6px";
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = kpg[g] || "";
+    inp.dataset.g = g;
+    inp.dataset.field = "kata";
+    inp.placeholder = "Ej: Heian Shodan";
+    inp.style.cssText = "width:100%;border:1px solid var(--border);border-radius:5px;padding:4px 6px;font-family:var(--font);font-size:.78rem";
+    cellK.appendChild(inp);
+    cg.appendChild(cellK);
+  });
+}
+
+async function guardarConfig() {
+  const apg = {};
+  const kpg = {};
+  GRADOS.forEach(g => { apg[g] = {}; kpg[g] = ""; });
+  document.querySelectorAll("#cg input[type=checkbox]").forEach(c => {
+    apg[c.dataset.g][c.dataset.a] = c.checked;
+  });
+  document.querySelectorAll("#cg input[data-field='kata']").forEach(c => {
+    kpg[c.dataset.g] = c.value.trim();
+  });
+  try {
+    await post("saveConfig", {}, {aspectosPorGrado: apg, katasPorGrado: kpg});
+    config = {aspectosPorGrado: apg, katasPorGrado: kpg};
+    toast("Configuración guardada ✓");
+  } catch(e) {
+    toast("Error: " + e.message, true);
+  }
+}
+
+async function inicializar() {
+  toast("Inicializando hojas… puede tardar varios segundos.");
+  try {
+    const r = await get("initSheets");
+    toast(r.message || "Hojas inicializadas ✓");
+  } catch(e) {
+    toast("Error: " + e.message, true);
+  }
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
+let _tt = null;
+function toast(msg, isErr=false) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className   = "on" + (isErr ? " err" : "");
+  if (_tt) clearTimeout(_tt);
+  _tt = setTimeout(()=>{ el.className=""; }, 3500);
+}
+
+  function toggleFicha(head) {
+  head.closest(".ficha").classList.toggle("collapsed");
+}
+
+function toggleObs(btn) {
+  const body = btn.nextElementSibling;
+  const icon = btn.querySelector(".obs-toggle-icon");
+  const open = body.classList.toggle("open");
+  icon.style.transform = open ? "rotate(90deg)" : "";
+}
+
+// Debounce para autoguardado de observaciones
+const _obsTimers = {};
+function autoGuardarObs(textarea) {
+  const {ctx, grupo, num} = textarea.dataset;
+  const key = `${ctx}_${grupo}_${num}`;
+  if (_obsTimers[key]) clearTimeout(_obsTimers[key]);
+  _obsTimers[key] = setTimeout(async () => {
+    if (!buf[ctx][grupo][num]) buf[ctx][grupo][num] = {};
+    buf[ctx][grupo][num]["Observaciones"] = textarea.value;
+    try {
+      const sinodal = ctx === "eval" ? rolNum : 0;
+      await post("saveCalificaciones", {sinodal, grupo}, buf[ctx][grupo]);
+    } catch(e) {
+      toast("Error guardando observación", true);
+    }
+  }, 900);
+}
+
+// ══════════════════════════════════════════
+//  EXÁMENES DESTACADOS
+// ══════════════════════════════════════════
+const MEDALLAS = ["🥇","🥈","🥉","4️⃣","5️⃣"];
+
+function switchDestacados(ctx, grupo, btn) {
+  const tabsId = ctx === "eval" ? "dest-eval-tabs" : "dest-prin-tabs";
+  document.getElementById(tabsId)
+    .querySelectorAll(".gtab")
+    .forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  if (ctx === "eval") gActivo.destEval = grupo;
+  else                gActivo.destPrin = grupo;
+  const wrapId = ctx === "eval" ? "destacados-eval-wrap" : "destacados-prin-wrap";
+  cargarDestacados(wrapId, grupo);
+}
+
+async function cargarDestacados(wrapId, grupo) {
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+  // Si no se pasa grupo, usar el activo según contexto
+  if (!grupo) {
+    grupo = wrapId.includes("eval") ? gActivo.destEval : gActivo.destPrin;
+  }
+  wrap.innerHTML = '<div class="loader">Cargando…</div>';
+  try {
+    const r = await get("getConcentrador", {grupo});
+    const rows = r.concentrador || [];
+    const conProm = rows
+      .filter(r => r["Promedio Final"] !== "" && r["Promedio Final"] !== undefined)
+      .map(r => ({...r, _prom: parseFloat(r["Promedio Final"])}))
+      .sort((a, b) => b._prom - a._prom)
+      .slice(0, 5);
+    wrap.innerHTML = buildDestacados(conProm);
+  } catch(e) {
+    wrap.innerHTML = `<div class="loader err">Error: ${e.message}</div>`;
+  }
+}
+
+function buildDestacados(lista) {
+  if (!lista.length) return '<div class="loader">Sin calificaciones registradas aún.</div>';
+  let html = '<div class="destacados-grid">';
+  lista.forEach((r, i) => {
+    const cls = r._prom >= 9 ? "good" : r._prom >= 7 ? "" : "bad";
+    html += `
+    <div class="dest-card">
+      <div class="dest-medal">${MEDALLAS[i]}</div>
+      <div class="dest-info">
+        <div class="dest-nombre">${r.Nombre || "—"}</div>
+        <div class="dest-grado">${r.Grado || ""}</div>
+      </div>
+      <div class="dest-prom prom-val ${cls}">${r._prom.toFixed(2)}</div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+
+// ══════════════════════════════════════════
+async function agregarAlumno() {
+  const nombre = document.getElementById("nuevo-nombre").value.trim().toUpperCase();
+  const grado  = document.getElementById("nuevo-grado").value;
+  const grupo  = document.getElementById("nuevo-grupo").value;
+
+  if (!nombre) { toast("Ingrese el nombre del alumno.", true); return; }
+  if (!grado)  { toast("Seleccione el grado del alumno.", true); return; }
+
+  const btn = document.querySelector("#v-alumnos .btn-red");
+  btn.disabled = true;
+  btn.textContent = "Guardando…";
+
+  try {
+    await post("addAlumno", {grupo}, {nombre, grado});
+    toast("Alumno agregado ✓");
+    document.getElementById("nuevo-nombre").value = "";
+    document.getElementById("nuevo-grado").value  = "";
+    // Sincronizar grupo activo con el seleccionado y recargar
+    gActivo.alum = grupo;
+    document.querySelectorAll("#v-alumnos .gtab").forEach((b, i) => {
+      b.classList.toggle("on", (i === 0 && grupo === "A") || (i === 1 && grupo === "B"));
+    });
+    await cargarAlumnos();
+  } catch(e) {
+    toast("Error: " + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "＋ Agregar";
+  }
+}
+
+async function toggleAsistencia(grupo, numero, presente){
+
+  try{
+
+    await post(
+      "saveAsistencia",
+      {grupo},
+      [{
+        numero: numero,
+        presente: presente
+      }]
+    );
+
+    toast("Asistencia actualizada ✓");
+
+  }catch(e){
+
+    toast("Error: " + e.message, true);
+
+  }
+
+}
+// ══════════════════════════════════════════
+//  CAMPO TOKEN CON MÁSCARA DE EMOJIS 🥷🏼
+// ══════════════════════════════════════════
+(function() {
+  const NINJA = "🥷🏼";
+  // Valor real del token (lo que el usuario escribe)
+  let tokenReal = "";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const input  = document.getElementById("token-real");
+    const hidden = document.getElementById("token-input");
+    if (!input) return;
+
+    // Sincroniza el display con emojis y el hidden con el valor real
+    function sync() {
+      hidden.value = tokenReal;
+      // Mostrar N ninjas; cursor queda al final automáticamente
+      input.value = NINJA.repeat(tokenReal.length);
+    }
+
+    // beforeinput: interceptar ANTES de que el navegador modifique el campo
+    input.addEventListener("beforeinput", (e) => {
+      e.preventDefault(); // siempre prevenimos; nosotros lo manejamos
+
+      const type = e.inputType;
+
+      if (type === "insertText" || type === "insertCompositionText") {
+        // Agregar los caracteres reales (sin espacios ni invisibles)
+        const chars = (e.data || "")
+          .replace(/[\u200B-\u200D\uFEFF\u00A0\s]/g, "");
+        tokenReal += chars;
+        sync();
+      }
+      else if (
+        type === "deleteContentBackward" ||
+        type === "deleteWordBackward"     ||
+        type === "deleteSoftLineBackward" ||
+        type === "deleteHardLineBackward"
+      ) {
+        // Borrar hacia atrás
+        if (type === "deleteContentBackward") {
+          tokenReal = tokenReal.slice(0, -1);
+        } else {
+          tokenReal = ""; // word/line delete → borrar todo
+        }
+        sync();
+      }
+      else if (
+        type === "deleteContentForward" ||
+        type === "deleteWordForward"
+      ) {
+        // Borrar hacia adelante (tecla Supr)
+        tokenReal = tokenReal.slice(1);
+        sync();
+      }
+      else if (type === "insertFromPaste" || type === "insertFromDrop") {
+        // Pegar: limpiar y agregar
+        const pasted = (e.data || "")
+          .replace(/[\u200B-\u200D\uFEFF\u00A0\s]/g, "");
+        tokenReal += pasted;
+        sync();
+      }
+      // Ignorar cualquier otro inputType (selección, historial, etc.)
+    });
+
+    // Fallback para navegadores que no soporten beforeinput (raro, pero por si acaso)
+    input.addEventListener("input", () => {
+      // Si beforeinput funcionó, input.value ya son emojis y tokenReal está correcto.
+      // Si no (fallback), tomamos lo que haya y limpiamos emojis del value.
+      const raw = input.value.replace(new RegExp(NINJA, "g"), "")
+        .replace(/[\u200B-\u200D\uFEFF\u00A0\s]/g, "");
+      if (raw.length > 0) {
+        tokenReal += raw;
+        sync();
+      }
+    });
+
+    // Exponer tokenReal para loginToken()
+    input._getTokenReal = () => tokenReal;
+    input._resetToken   = () => { tokenReal = ""; sync(); };
+  });
+})();
+
+  async function loginToken(){
+
+  const inputEl = document.getElementById("token-real");
+  // Usar el valor real interceptado; fallback al hidden por compatibilidad
+  const rawToken = (inputEl && inputEl._getTokenReal)
+    ? inputEl._getTokenReal()
+    : (document.getElementById("token-input").value || "");
+
+  const token = rawToken
+    .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+    .replace(/\s+/g, "")
+    .toUpperCase();
+
+  if(!token){
+    document.getElementById("login-msg").textContent = "Ingrese un token";
+    return;
+  }
+
+  const wrap = document.getElementById("login-progress-wrap");
+  const bar  = document.getElementById("login-progress-bar");
+  const msg  = document.getElementById("login-msg");
+  msg.textContent = "";
+  wrap.style.display = "block";
+  bar.style.background = "#b8860b";
+
+  let pct = 0;
+  function avanzar(target, delay){
+    return new Promise(res => setTimeout(() => { pct = target; bar.style.width = pct + "%"; res(); }, delay));
+  }
+
+  try{
+
+    await avanzar(15, 80);
+
+    const api = API_URL.trim();
+    const test = await fetch(`${api}?action=getSinodales`);
+    const testJson = await test.json();
+    if(!testJson || !testJson.sinodales) throw new Error("Sin conexión");
+
+    await avanzar(40, 100);
+
+    API_URL = api;
+    localStorage.setItem("k_api", API_URL);
+
+    const cfg = await get("getConfig");
+    config = cfg;
+
+    await avanzar(65, 100);
+
+    const sr = await get("getSinodales");
+    sinodales = sr.sinodales || [];
+
+    await avanzar(85, 100);
+
+    const sinodal = sinodales.find(
+      s => (s.url || "").toString().trim().toUpperCase() === token.toUpperCase()
+    );
+
+    if(sinodal === undefined || sinodal === null){
+      bar.style.background = "#c0392b";
+      await avanzar(100, 100);
+      setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0%"; }, 600);
+      msg.textContent = "Token inválido";
+      // Limpiar campo para que el usuario pueda reintentar
+      const inp = document.getElementById("token-real");
+      if (inp && inp._resetToken) inp._resetToken();
+      return;
+    }
+
+    usuarioActual = sinodal;
+    rolNum = Number(sinodal.numero);
+    tokenActual = token;
+
+    await avanzar(100, 150);
+    await new Promise(res => setTimeout(res, 300));
+
+    console.log("ROL asignado:", rolNum, "| Es admin:", rolNum === 0);
+
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("banner-nombre").textContent = sinodal.nombre;
+    document.getElementById("banner-usuario").style.display = "block";
+
+    aplicarPermisos();
+    await iniciarSistema();
+
+  }catch(e){
+    console.error(e);
+    bar.style.background = "#c0392b";
+    bar.style.width = "100%";
+    setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0%"; }, 600);
+    msg.textContent = "Error de conexión";
+  }
+
+}
+// ══════════════════════════════════════════
+//  EXPORTAR PDF CONCENTRADOR
+// ══════════════════════════════════════════
+async function generarPDFConcentrador() {
+  const { jsPDF } = window.jspdf;
+  const grupo = gActivo.conc;
+
+  // 1. Obtener datos frescos
+  let rows = [];
+  try {
+    const r = await get("getConcentrador", { grupo });
+    rows = r.concentrador || [];
+  } catch(e) {
+    toast("Error al obtener datos: " + e.message, true);
+    return;
+  }
+  if (!rows.length) { toast("No hay datos en el concentrador.", true); return; }
+
+  // 2. Crear documento HORIZONTAL (landscape) carta
+  const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "letter" });
+  const PW = doc.internal.pageSize.getWidth();   // 279.4 mm
+  const PH = doc.internal.pageSize.getHeight();  // 215.9 mm
+  const ML = 10, MR = 10; // márgenes laterales
+
+  // ── COLORES ──
+  const INK    = [17,  24,  39];
+  const RED    = [192,  57,  43];
+  const GOLD   = [184, 134,  11];
+  const GREEN  = [26,  122,  60];
+  const WHITE  = [255, 255, 255];
+  const BLACK  = [0,   0,   0  ];
+  const HDR_BG = [240, 240, 240]; // gris claro
+  const BORDER = [200, 200, 200];
+
+  // ── LOGO ──
+  const LOGO_URL = "https://raw.githubusercontent.com/americordzn-karate/retos/17eba3e9c50358ded081c3fe44bf64e6db2745ee/Escudo%20Circulo%20PNG.png";
+  let logoData = null;
+  try {
+    const resp = await fetch(LOGO_URL);
+    const blob = await resp.blob();
+    logoData = await new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload  = () => res(fr.result);
+      fr.onerror = rej;
+      fr.readAsDataURL(blob);
+    });
+  } catch(_) {}
+
+  // ── CABECERA: fondo gris claro, borde negro redondeado ──
+  const HDR_X = ML, HDR_Y = 8;
+  const HDR_W = PW - ML - MR;
+  const HDR_H = 30;
+  const RADIUS = 3;
+
+  doc.setFillColor(...HDR_BG);
+  doc.setDrawColor(...BLACK);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(HDR_X, HDR_Y, HDR_W, HDR_H, RADIUS, RADIUS, "FD");
+
+  // Logo (esquina superior izquierda dentro del recuadro)
+  if (logoData) {
+    doc.addImage(logoData, "PNG", HDR_X + 4, HDR_Y + 4, 22, 22);
+  }
+
+  // Fecha y hora (esquina superior derecha)
+  const ahora = new Date();
+  const fechaStr = ahora.toLocaleDateString("es-MX", { day: "2-digit", month: "long", year: "numeric" });
+  const horaStr  = ahora.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`${fechaStr}   ${horaStr}`, HDR_X + HDR_W - 4, HDR_Y + 8, { align: "right" });
+
+  // Título principal centrado
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.setTextColor(...BLACK);
+  doc.text("EVALUACIÓN SENSHI-KAN", PW / 2, HDR_Y + 13, { align: "center" });
+
+  // Subtítulo: Grupo
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  doc.text(`Concentrador · Grupo ${grupo}`, PW / 2, HDR_Y + 20, { align: "center" });
+
+  // Sinodales
+  const nombresSinodales = sinodales
+    .filter(s => Number(s.numero) >= 0)
+    .slice()
+    .sort((a, b) => Number(a.numero) - Number(b.numero))
+    .map(s => `${Number(s.numero) === 0 ? " " : ""}${s.nombre}`)
+    .join("  |  ");
+  doc.setFontSize(6.5);
+  doc.setTextColor(80, 80, 80);
+  doc.text("Sinodales: " + nombresSinodales, PW / 2, HDR_Y + 27, { align: "center", maxWidth: HDR_W - 30 });
+
+  // ── TOP 3 DESTACADOS ──
+  const top3 = rows
+    .filter(r => r["Promedio Final"] !== "" && r["Promedio Final"] !== undefined)
+    .map(r => ({ ...r, _prom: parseFloat(r["Promedio Final"]) }))
+    .sort((a, b) => b._prom - a._prom)
+    .slice(0, 3);
+
+  let curY = HDR_Y + HDR_H + 5;
+
+  if (top3.length) {
+    // Etiqueta sección
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...BLACK);
+    doc.text("EXÁMENES DESTACADOS", ML, curY + 4);
+    curY += 7;
+
+    const MEDALLAS_PDF = ["1°", "2°", "3°"];
+    const cardW = (HDR_W - 6) / 3;   // 3 tarjetas con gap de 3 mm
+    const cardH = 16;
+
+    top3.forEach((r, i) => {
+      const cx = ML + i * (cardW + 3);
+      const promCls = r._prom >= 9 ? GREEN : r._prom >= 7 ? GOLD : RED;
+
+      // Fondo tarjeta
+      doc.setFillColor(250, 250, 250);
+      doc.setDrawColor(...BORDER);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(cx, curY, cardW, cardH, 2, 2, "FD");
+
+      // Medalla
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(...GOLD);
+      doc.text(MEDALLAS_PDF[i], cx + 5, curY + 10);
+
+      // Nombre y grado
+      const maxNomW = cardW - 24;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.setTextColor(...BLACK);
+      const nombreTrunc = doc.splitTextToSize(r.Nombre || "—", maxNomW)[0];
+      doc.text(nombreTrunc, cx + 14, curY + 8);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.setTextColor(100, 100, 100);
+      doc.text(r.Grado || "", cx + 14, curY + 13);
+
+      // Promedio
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...promCls);
+      doc.text(r._prom.toFixed(2), cx + cardW - 4, curY + 10, { align: "right" });
+    });
+
+    curY += cardH + 5;
+  }
+
+  // ── TABLA CONCENTRADOR ──
+  const head = [["#", "Nombre", "Grado", ...ASPECTOS.map(a => a.replace(" Basica", "\nBasica")), "Prom.", "Resultado", "Observaciones"]];
+  const body = rows.map(r => {
+    const res    = r["Resultado"];
+    const resTxt = !res ? "Pendiente" : res;
+    return [
+      r.Numero || "",
+      r.Nombre || "",
+      r.Grado  || "",
+      ...ASPECTOS.map(a => r[a] || "—"),
+      r["Promedio Final"] || "—",
+      resTxt,
+      (r["Observaciones"] || "").toString()
+    ];
+  });
+
+  let apr=0, no=0, pend=0;
+  rows.forEach(r => {
+    if (r.Resultado === "APROBADO") apr++;
+    else if (r.Resultado === "NO APROBADO") no++;
+    else pend++;
+  });
+
+  doc.autoTable({
+    head,
+    body,
+    startY: curY,
+    theme: "grid",
+    styles: {
+      font: "helvetica",
+      fontSize: 7,
+      cellPadding: { top: 2.2, bottom: 2.2, left: 2.5, right: 2.5 },
+      overflow: "linebreak",
+      valign: "middle",
+      lineColor: BORDER,
+      lineWidth: 0.2,
+    },
+    headStyles: {
+      fillColor: INK,
+      textColor: WHITE,
+      fontStyle: "bold",
+      fontSize: 5.5,
+      halign: "center",
+    },
+    columnStyles: {
+      0:  { halign: "center", cellWidth: 8  },
+      1:  { cellWidth: 30 },
+      2:  { cellWidth: 14, halign: "center" },
+      3:  { halign: "center", cellWidth: 12 },
+      4:  { halign: "center", cellWidth: 12 },
+      5:  { halign: "center", cellWidth: 13 },
+      6:  { halign: "center", cellWidth: 12 },
+      7:  { halign: "center", cellWidth: 12 },
+      8:  { halign: "center", cellWidth: 13 },
+      9:  { halign: "center", cellWidth: 18 },
+      10: { cellWidth: "auto", fontSize: 6.5 },
+    },
+    alternateRowStyles: { fillColor: [250, 250, 248] },
+    didParseCell(data) {
+      if (data.section !== "body") return;
+      const col = data.column.index;
+      // Suprimir renderizado automático de Observaciones (lo hace didDrawCell)
+      if (col === 10) {
+        data.cell.text = [];
+        return;
+      }
+      if (col === 9) {
+        const v = data.cell.raw;
+        data.cell.styles.fontSize = 5.5;
+        if (v === "APROBADO")         { data.cell.styles.textColor = GREEN; data.cell.styles.fontStyle = "bold"; }
+        else if (v === "NO APROBADO") { data.cell.styles.textColor = RED;   data.cell.styles.fontStyle = "bold"; }
+        else                          { data.cell.styles.textColor = GOLD; }
+      }
+      if (col === 8) {
+        const v = parseFloat(data.cell.raw);
+        if (!isNaN(v)) { data.cell.styles.textColor = v >= 7 ? GREEN : RED; data.cell.styles.fontStyle = "bold"; }
+      }
+      if (col >= 3 && col <= 7) {
+        const v = data.cell.raw;
+        if (v === "E" || v === "MB")  data.cell.styles.textColor = GREEN;
+        else if (v === "M")           data.cell.styles.textColor = RED;
+      }
+    },
+    // Renderizado de observaciones con nombre de sinodal en negritas
+    didDrawCell(data) {
+      if (data.section !== "body" || data.column.index !== 10) return;
+      const raw = (data.cell.raw || "").toString();
+      if (!raw) return;
+      const lineas = raw.split("\n");
+      const x = data.cell.x + 2.5;
+      let y = data.cell.y + 4;
+      const lineH = 3.5;
+      lineas.forEach(linea => {
+        const colonPos = linea.indexOf(": ");
+        if (colonPos > 0) {
+          // Nombre sinodal en negritas
+          const nombre = linea.substring(0, colonPos + 1);
+          const resto  = linea.substring(colonPos + 1);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(6.5);
+          doc.setTextColor(...BLACK);
+          const anchoNombre = doc.getTextWidth(nombre);
+          doc.text(nombre, x, y);
+          doc.setFont("helvetica", "normal");
+          doc.text(resto, x + anchoNombre, y);
+        } else {
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(6.5);
+          doc.setTextColor(...BLACK);
+          doc.text(linea, x, y);
+        }
+        y += lineH;
+      });
+    },
+    margin: { left: ML, right: MR },
+  });
+
+  // ── RESUMEN ESTADÍSTICO ──
+  const finalY = doc.lastAutoTable.finalY + 5;
+  const stats  = [
+    { label: "Total",        val: rows.length, color: INK   },
+    { label: "Aprobados",    val: apr,         color: GREEN },
+    { label: "No aprobados", val: no,          color: RED   },
+    { label: "Pendientes",   val: pend,        color: GOLD  },
+  ];
+  const boxW = (HDR_W - 9) / 4;
+  stats.forEach((s, i) => {
+    const bx = ML + i * (boxW + 3);
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(...BORDER);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(bx, finalY, boxW, 12, 2, 2, "FD");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...s.color);
+    doc.text(String(s.val), bx + boxW / 2, finalY + 7.5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6);
+    doc.setTextColor(100, 100, 100);
+    doc.text(s.label, bx + boxW / 2, finalY + 11, { align: "center" });
+  });
+
+  // ── PIE DE PÁGINA ──
+  doc.setFontSize(6.5);
+  doc.setTextColor(170, 170, 170);
+  doc.text("Sistema de Evaluaciones Senshi-Kan", ML, PH - 6);
+  doc.text(`Generado: ${fechaStr}  ${horaStr}`, PW - MR, PH - 6, { align: "right" });
+
+  // ── GUARDAR ──
+  const fn = `concentrador_grupo${grupo}_${ahora.getFullYear()}${String(ahora.getMonth()+1).padStart(2,"0")}${String(ahora.getDate()).padStart(2,"0")}.pdf`;
+  doc.save(fn);
+  toast("PDF generado ✓");
+}
+
+// ══════════════════════════════════════════
+//  RESET EXAMEN
+// ══════════════════════════════════════════
+function confirmarResetExamen() {
+  const modal = document.getElementById("modal-reset");
+  modal.style.display = "flex";
+}
+
+function cerrarModalReset() {
+  document.getElementById("modal-reset").style.display = "none";
+}
+
+async function ejecutarResetExamen() {
+  const btn = document.getElementById("btn-reset-confirm");
+  btn.disabled = true;
+  btn.textContent = "Limpiando…";
+  try {
+    const r = await get("resetExamen");
+    cerrarModalReset();
+    toast(r.message || "Calificaciones eliminadas ✓");
+    // Limpiar buffers en memoria
+    ["A","B"].forEach(g => {
+      buf.eval[g] = {};
+      buf.prin[g] = {};
+    });
+  } catch(e) {
+    cerrarModalReset();
+    toast("Error: " + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🗑️ Sí, limpiar todo";
+  }
+}
+
+</script>
+</body>
+</html>
