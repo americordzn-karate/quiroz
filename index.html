@@ -500,7 +500,8 @@ const GRADOS      = ["10 Kyu","9 Kyu","8 Kyu","7 Kyu","6 Kyu","5 Kyu","4 Kyu","3
 const ESCALA      = ["M","R","B","MB","E"];
 const VALS        = {M:6,R:7,B:8,MB:9,E:10};
 
-let API_URL    = localStorage.getItem("k_api") || API_DEFAULT;
+const STORAGE_KEY = "k_api_" + (location.pathname.split("/")[1] || "root");
+let API_URL    = localStorage.getItem(STORAGE_KEY) || API_DEFAULT;
 let rolNum     = null;   // null=sin rol, 0=principal, N=sinodal N
   let tokenActual = "";
 
@@ -1487,7 +1488,7 @@ async function toggleAsistencia(grupo, numero, presente){
     await avanzar(40, 100);
 
     API_URL = api;
-    localStorage.setItem("k_api", API_URL);
+    localStorage.setItem(STORAGE_KEY, API_URL);
 
     const cfg = await get("getConfig");
     config = cfg;
