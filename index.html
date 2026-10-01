@@ -523,10 +523,10 @@ const gActivo = { eval:"A", prin:"A", conc:"A", alum:"A", destEval:"A", destPrin
 //  CÍRCULO DE CINTA POR GRADO
 // ══════════════════════════════════════════
 const CINTA_COLORES = {
- "10 Kyu": { bg: "#ffffff" },
-  "9 Kyu":  { bg: "#f5d000", inner: "#f5d000" },
-  "8 Kyu":  { bg: "#f5831f" },
-  "7 Kyu":  { bg: "#f5831f" }, inner: "#2e8b3a" },
+  "10 Kyu": { bg: "#ffffff" },
+  "9 Kyu":  { bg: "#ffffff", inner: "#f5d000" },
+  "8 Kyu":  { bg: "#f5d000" },
+  "7 Kyu":  { bg: "#f5831f" },
   "6 Kyu":  { bg: "#2e8b3a" },
   "5 Kyu":  { bg: "#2e8b3a", inner: "#1a5fa8" },
   "4 Kyu":  { bg: "#1a5fa8" },
@@ -534,6 +534,7 @@ const CINTA_COLORES = {
   "2 Kyu":  { bg: "#6b3a1f" },
   "1 Kyu":  { bg: "#6b3a1f", inner: "#111111" }
 };
+
 function cintaHTML(grado) {
   const c = CINTA_COLORES[grado] || { bg: "#cccccc" };
   const inner = c.inner
