@@ -420,6 +420,10 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <button class="btn btn-ghost" onclick="cargarConcentrador()">🔄 Actualizar concentrador</button>
     <button class="btn btn-dark" onclick="generarPDFConcentrador()">📄 Exportar PDF</button>
   </div>
+  <!-- NUEVO: registra fecha, grado e historial de los aprobados (Grupo A) -->
+  <div class="btn-row">
+    <button class="btn btn-red" id="btn-subir-cals" onclick="subirCalificaciones()">⬆️ Subir Calificaciones</button>
+  </div>
   </div><!-- /conc-seccion -->
 </section>
 
@@ -552,7 +556,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <button class="btn btn-ghost" onclick="cargarRegistro()">🔄 Recargar</button>
   </div>
   <div class="card tbl-wrap" id="reg-wrap" style="padding:0"><div class="loader">Cargando…</div></div>
-  <p class="lst-help">➡️ <strong>Enviar a examen</strong> agrega al alumno a la lista del Grupo A (Hoja 1) con su nombre y grado. Al exportar el PDF del concentrador del Grupo A, los alumnos con promedio final mayor a 6 suben un grado y se registra la fecha de su último examen.</p>
+  <p class="lst-help">➡️ <strong>Enviar a examen</strong> agrega al alumno a la lista del Grupo A (Hoja 1) con su nombre y grado. Al pulsar <strong>Subir Calificaciones</strong> (debajo del concentrador), los alumnos aprobados del Grupo A suben un grado, se registra la fecha de su último examen y se agrega a su historial. Haga clic en el nombre de un alumno para ver su historial.</p>
   </div><!-- /reg-seccion -->
 
   <div id="nuevo-examen-seccion" style="display:none">
@@ -648,6 +652,20 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="cerrarModalNuevoExamen()">Cancelar</button>
       <button class="btn btn-red" id="btn-nuevo-examen" onclick="ejecutarNuevoExamen()" disabled>🆕 Sí, borrar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- NUEVO: MODAL HISTORIAL DE EXÁMENES -->
+<div id="modal-hist" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) cerrarHistorial()">
+  <div style="background:#fff;border-radius:16px;padding:24px 26px;width:440px;max-width:100%;max-height:85vh;box-shadow:0 10px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:14px">
+    <div>
+      <div id="hist-titulo" style="font-family:var(--font-h);font-size:1.1rem;font-weight:700;color:var(--ink)"></div>
+      <div id="hist-sub" style="font-size:.78rem;color:var(--ink3);margin-top:2px"></div>
+    </div>
+    <div id="hist-wrap" style="overflow:auto"></div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="cerrarHistorial()">Cerrar</button>
     </div>
   </div>
 </div>
@@ -2035,7 +2053,6 @@ async function generarPDFConcentrador() {
   const fn = `concentrador_grupo${grupo}_${ahora.getFullYear()}${String(ahora.getMonth()+1).padStart(2,"0")}${String(ahora.getDate()).padStart(2,"0")}.pdf`;
   doc.save(fn);
   toast("PDF generado ✓");
-  if (grupo === "A") registrarExamenTrasPDF(); // NUEVO: actualiza Último examen y grado en el registro
 }
 
 // ══════════════════════════════════════════
@@ -2623,6 +2640,14 @@ let dojoActivo    = "Todos";
 let regEditando   = null;                       // id en edición
 
 function normNom(n) { return String(n || "").replace(/\s+/g, " ").trim().toUpperCase(); }
+// Clave sin acentos (la Ñ se conserva) para detectar duplicados
+function claveNom(n) {
+  return normNom(n).replace(/Ñ/g, "\u0001").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\u0001/g, "Ñ");
+}
+function buscarDuplicado(nombre, dojo, idPropio) {
+  const k = claveNom(nombre), d = claveNom(dojo);
+  return registro.find(a => claveNom(a.nombre) === k && claveNom(a.dojo) === d && a.id !== idPropio);
+}
 
 function fechaCorta(iso) {
   const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -2656,7 +2681,7 @@ async function cargarRegistro() {
     catalogos = { dojos: cat.dojos || [], grados: cat.grados || [] };
     registro = reg.alumnos || [];
     enExamen = {};
-    (hoja1.lista || []).forEach(a => { enExamen[normNom(a.nombre)] = true; });
+    registro.forEach(a => { if (a.enExamen) enExamen[a.id] = true; }); // por ID (resuelve homónimos)
     document.getElementById("reg-dojo").innerHTML  = opcionesLista(catalogos.dojos, document.getElementById("reg-dojo").value, "-- Dojo --");
     document.getElementById("reg-grado").innerHTML = opcionesLista(catalogos.grados, document.getElementById("reg-grado").value, "-- Grado --");
     regEditando = null;
@@ -2709,10 +2734,10 @@ function renderRegistro() {
         </div></td></tr>`;
       return;
     }
-    const ya = !!enExamen[normNom(a.nombre)];
+    const ya = !!enExamen[a.id];
     h += `<tr>
       <td>${escLst(a.id)}</td>
-      <td><strong>${escLst(a.nombre)}</strong></td>
+      <td><a href="#" onclick="verHistorial('${a.id}');return false" title="Ver historial de exámenes" style="color:var(--ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--ink4)">${escLst(a.nombre)}</a></td>
       <td>${escLst(a.dojo)}</td>
       <td style="white-space:nowrap">${escLst(a.grado)}</td>
       <td>${fechaCorta(a.ultimoExamen)}</td>
@@ -2737,14 +2762,14 @@ async function agregarRegistro() {
   if (!data.nombre) { toast("Escriba el nombre del alumno.", true); return; }
   if (!data.dojo)   { toast("Seleccione el dojo.", true); return; }
   if (!data.grado)  { toast("Seleccione el grado.", true); return; }
-  const dup = registro.find(a => normNom(a.nombre) === data.nombre);
-  if (dup) { toast(`Ya existe ${data.nombre} (ID ${dup.id}).`, true); return; }
+  const dup = buscarDuplicado(data.nombre, data.dojo, null);
+  if (dup) { toast(`Ya existe ${dup.nombre} en el dojo ${dup.dojo} (ID ${dup.id}).`, true); return; }
 
   const btn = document.getElementById("btn-reg-agregar");
   btn.disabled = true; btn.textContent = "Guardando…";
   try {
     const r = await post("addRegistroAlumno", {}, data);
-    registro.push({ id: r.id, ...data });
+    registro.push({ id: r.id, ...data, enExamen: false });
     document.getElementById("reg-nombre").value = "";
     document.getElementById("reg-fecha").value = "";
     document.getElementById("reg-nombre").focus(); // dojo y grado se conservan
@@ -2766,6 +2791,8 @@ async function guardarEdicionRegistro(id) {
     ultimoExamen: document.getElementById("reg-e-fecha").value
   };
   if (!data.nombre || !data.dojo || !data.grado) { toast("Nombre, dojo y grado son obligatorios.", true); return; }
+  const dup = buscarDuplicado(data.nombre, data.dojo, id);
+  if (dup) { toast(`Ya existe ${dup.nombre} en el dojo ${dup.dojo} (ID ${dup.id}).`, true); return; }
   try {
     await post("updateRegistroAlumno", {}, data);
     const a = registro.find(x => x.id === id);
@@ -2802,7 +2829,7 @@ async function enviarRegistroAExamen(id, btn) {
   btn.disabled = true; btn.textContent = "Enviando…";
   try {
     const r = await get("enviarAExamen", { id });
-    enExamen[normNom(a.nombre)] = true;
+    enExamen[a.id] = true;
     renderRegistro();
     toast(r.message || "Enviado a examen ✓");
     if (puedeEditarListas()) cargarListas(false); // refresca la lista de la vista 🥋
@@ -2835,6 +2862,58 @@ function contarEvaluados(ctx, grupo) {
   const n = (alumnos[grupo] || []).filter(a => a.presente !== false).length;
   el.textContent = `(${n})`;
 }
+
+// ══════════════════════════════════════════
+//  NUEVO — SUBIR CALIFICACIONES E HISTORIAL
+// ══════════════════════════════════════════
+async function subirCalificaciones() {
+  if (gActivo.conc !== "A") {
+    toast("Subir Calificaciones funciona con el Grupo A. Seleccione la pestaña Grupo A del concentrador.", true);
+    return;
+  }
+  if (!confirm("¿Subir las calificaciones del Grupo A?\n\nA cada alumno APROBADO se le registrará la fecha de hoy como último examen, subirá un grado y se agregará a su historial.\n(Si ya se subieron hoy, solo se actualiza la calificación; el grado no vuelve a subir.)")) return;
+  const btn = document.getElementById("btn-subir-cals");
+  btn.disabled = true; btn.textContent = "Subiendo…";
+  try {
+    const r = await get("subirCalificaciones");
+    const s = (r.subidos || []).length, u = (r.actualizados || []).length, nf = r.noEncontrados || [];
+    let msg = s || u ? `Calificaciones subidas ✓ ${s} alumno(s) subieron de grado` : "No hubo alumnos aprobados que subir.";
+    if (u) msg += `, ${u} actualizado(s) (ya subidos hoy)`;
+    msg += ".";
+    if (nf.length) msg += ` No se encontraron en el registro: ${nf.join(", ")}.`;
+    toast(msg, nf.length > 0);
+    cargarRegistro();
+  } catch (e) {
+    toast("Error: " + e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = "⬆️ Subir Calificaciones";
+  }
+}
+
+async function verHistorial(id) {
+  const a = registro.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById("hist-titulo").textContent = a.nombre;
+  document.getElementById("hist-sub").textContent = `ID ${a.id} · ${a.dojo} · Grado actual: ${a.grado}`;
+  const wrap = document.getElementById("hist-wrap");
+  wrap.innerHTML = '<div class="loader">Cargando historial…</div>';
+  document.getElementById("modal-hist").style.display = "flex";
+  try {
+    const r = await get("getHistorial", { id });
+    const h = r.historial || [];
+    if (!h.length) { wrap.innerHTML = '<div class="loader">Este alumno aún no tiene exámenes registrados.</div>'; return; }
+    let t = `<table class="reg-tbl"><thead><tr><th>FECHA</th><th>GRADO</th><th style="text-align:right">CALIF.</th></tr></thead><tbody>`;
+    h.forEach(x => {
+      const c = parseFloat(x.calif);
+      t += `<tr><td>${fechaCorta(x.fecha)}</td><td>${escLst(x.grado)}</td><td style="text-align:right;font-weight:700">${isNaN(c) ? escLst(x.calif) : c.toFixed(2)}</td></tr>`;
+    });
+    wrap.innerHTML = t + `</tbody></table>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="loader err">Error: ${escLst(e.message)}</div>`;
+  }
+}
+
+function cerrarHistorial() { document.getElementById("modal-hist").style.display = "none"; }
 
 </script>
 </body>
