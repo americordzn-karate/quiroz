@@ -304,6 +304,11 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
       Entrar
     </button>
 
+    <!-- NUEVO: acceso con huella (solo aparece si ya se activó en este teléfono) -->
+    <button id="btn-huella-login" onclick="bioEntrar()" style="display:none;background:#b8860b">
+      🖐 Entrar con huella
+    </button>
+
     <!-- Barra de progreso -->
     <div id="login-progress-wrap" style="display:none;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden">
       <div id="login-progress-bar" style="height:100%;width:0%;background:#b8860b;border-radius:3px;transition:width .3s ease"></div>
@@ -324,6 +329,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <button id="nb-principal" onclick="showView('v-principal')" style="display:none">🪪</button>
     <button id="nb-alumnos" onclick="showView('v-alumnos')" style="display:none">🥋</button>
     <button id="nb-config" onclick="showView('v-config')" style="display:none">⚙️</button>
+    <button id="nb-qr" onclick="abrirModalQR()" style="display:none" title="Código QR de la página">🔳</button>
   </nav>
 </header>
 
@@ -333,6 +339,8 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
       <span class="banner-saludo">Bienvenid@</span>
       <span class="banner-nombre" id="banner-nombre"></span>
     </div>
+    <!-- NUEVO: activar / quitar huella en este teléfono -->
+    <button class="btn btn-ghost" id="btn-huella-cfg" onclick="bioAlternar()" style="display:none;margin-left:auto;font-size:.8rem;padding:6px 12px"></button>
   </div>
 </div>
 
@@ -576,6 +584,19 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="cerrarModalNuevoExamen()">Cancelar</button>
       <button class="btn btn-red" id="btn-nuevo-examen" onclick="ejecutarNuevoExamen()" disabled>🆕 Sí, borrar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- NUEVO: MODAL CÓDIGO QR -->
+<div id="modal-qr" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this) cerrarModalQR()">
+  <div style="background:#fff;border-radius:16px;padding:26px 28px;width:340px;max-width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center">
+    <div style="font-family:var(--font-h);font-size:1.1rem;font-weight:700;color:var(--ink)">Sistema de Evaluaciones</div>
+    <div id="qr-box" style="width:240px;height:240px;display:flex;align-items:center;justify-content:center;background:#fff;padding:8px;border:1px solid var(--border);border-radius:10px"></div>
+    <div id="qr-link" style="font-size:.76rem;color:var(--ink3);word-break:break-all"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="cerrarModalQR()">Cerrar</button>
+      <button class="btn btn-red" onclick="compartirLink()">🔗 Compartir Link</button>
     </div>
   </div>
 </div>
@@ -1542,11 +1563,13 @@ async function toggleAsistencia(grupo, numero, presente){
   });
 })();
 
-  async function loginToken(){
+  async function loginToken(tokenDirecto){
 
   const inputEl = document.getElementById("token-real");
   // Usar el valor real interceptado; fallback al hidden por compatibilidad
-  const rawToken = (inputEl && inputEl._getTokenReal)
+  // (NUEVO: si viene de la huella, se usa el token guardado en el teléfono)
+  const rawToken = (typeof tokenDirecto === "string" && tokenDirecto) ? tokenDirecto
+    : (inputEl && inputEl._getTokenReal)
     ? inputEl._getTokenReal()
     : (document.getElementById("token-input").value || "");
 
@@ -1605,6 +1628,7 @@ async function toggleAsistencia(grupo, numero, presente){
       await avanzar(100, 100);
       setTimeout(() => { wrap.style.display = "none"; bar.style.width = "0%"; }, 600);
       msg.textContent = "Token inválido";
+      if (typeof tokenDirecto === "string" && tokenDirecto) bioTokenInvalido(); // NUEVO
       // Limpiar campo para que el usuario pueda reintentar
       const inp = document.getElementById("token-real");
       if (inp && inp._resetToken) inp._resetToken();
@@ -1625,6 +1649,7 @@ async function toggleAsistencia(grupo, numero, presente){
     document.getElementById("banner-usuario").style.display = "block";
 
     aplicarPermisos();
+    bioTrasLogin(token); // NUEVO: huella y botón QR
     await iniciarSistema();
 
   }catch(e){
@@ -2346,6 +2371,160 @@ async function ejecutarNuevoExamen() {
 window.addEventListener("beforeunload", (e) => {
   if (listasSucias.A || listasSucias.B) { e.preventDefault(); e.returnValue = ""; }
 });
+
+// ══════════════════════════════════════════
+//  NUEVO — ACCESO CON HUELLA DIGITAL (WebAuthn)
+//  La huella se verifica en el propio teléfono; si es correcta se usa
+//  el token del sinodal guardado en ese teléfono. Requiere HTTPS
+//  (GitHub Pages lo cumple). Cada teléfono guarda un solo sinodal.
+// ══════════════════════════════════════════
+const BIO_KEY = "evalQuirozBio";
+const bioB64   = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
+const bioDeB64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const bioSoportada = () => !!(window.PublicKeyCredential && navigator.credentials && window.isSecureContext);
+function bioLeer() { try { return JSON.parse(localStorage.getItem(BIO_KEY) || "null"); } catch (e) { return null; } }
+
+function bioRefrescarBotones() {
+  const b = bioLeer();
+  const login = document.getElementById("btn-huella-login");
+  if (login) {
+    login.style.display = (bioSoportada() && b) ? "" : "none";
+    login.textContent = b && b.nombre ? `🖐 Entrar con huella (${b.nombre.trim().split(/\s+/)[0]})` : "🖐 Entrar con huella";
+  }
+  const cfg = document.getElementById("btn-huella-cfg");
+  if (cfg) {
+    const dentro = !!tokenActual;
+    cfg.style.display = (bioSoportada() && dentro) ? "" : "none";
+    const mia = b && dentro && b.token === tokenActual;
+    cfg.textContent = mia ? "🖐 Quitar huella" : "🖐 Activar huella";
+  }
+}
+
+function bioTrasLogin(token) {
+  const b = bioLeer();
+  if (b && b.token === token && usuarioActual) {
+    b.nombre = usuarioActual.nombre || "";
+    try { localStorage.setItem(BIO_KEY, JSON.stringify(b)); } catch (e) {}
+  }
+  const qr = document.getElementById("nb-qr");
+  if (qr) qr.style.display = "";
+  bioRefrescarBotones();
+}
+
+async function bioActivar() {
+  if (!tokenActual) return;
+  const previa = bioLeer();
+  if (previa && previa.token !== tokenActual &&
+      !confirm(`Este teléfono ya tiene la huella activada para ${previa.nombre || "otro sinodal"}. ¿Reemplazarla por la suya?`)) return;
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      rp: { name: "Evaluaciones Quiroz Team" },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)),
+              name: "sinodal-" + (usuarioActual ? usuarioActual.numero : ""),
+              displayName: (usuarioActual && usuarioActual.nombre) || "Sinodal" },
+      pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required", residentKey: "discouraged" },
+      timeout: 60000
+    }});
+    localStorage.setItem(BIO_KEY, JSON.stringify({
+      id: bioB64(cred.rawId), token: tokenActual, nombre: (usuarioActual && usuarioActual.nombre) || ""
+    }));
+    toast("Huella activada en este teléfono ✓");
+  } catch (e) {
+    toast("No se pudo activar la huella. Verifique que el teléfono tenga huella o bloqueo de pantalla y que abra la página en Chrome o Safari.", true);
+  }
+  bioRefrescarBotones();
+}
+
+function bioAlternar() {
+  const b = bioLeer();
+  if (b && b.token === tokenActual) {
+    localStorage.removeItem(BIO_KEY);
+    toast("Huella desactivada en este teléfono.");
+    bioRefrescarBotones();
+  } else {
+    bioActivar();
+  }
+}
+
+async function bioEntrar() {
+  const b = bioLeer();
+  if (!b) return;
+  const msg = document.getElementById("login-msg");
+  msg.textContent = "";
+  try {
+    await navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ type: "public-key", id: bioDeB64(b.id), transports: ["internal"] }],
+      userVerification: "required",
+      timeout: 60000
+    }});
+  } catch (e) {
+    msg.textContent = "No se pudo verificar la huella.";
+    return;
+  }
+  loginToken(b.token);
+}
+
+// Si el token guardado ya no existe (p. ej. se cambió en Sinodales), se borra la huella
+function bioTokenInvalido() {
+  localStorage.removeItem(BIO_KEY);
+  bioRefrescarBotones();
+  document.getElementById("login-msg").textContent =
+    "La huella guardada ya no es válida. Ingrese su token y vuelva a activarla.";
+}
+
+document.addEventListener("DOMContentLoaded", bioRefrescarBotones);
+
+// ══════════════════════════════════════════
+//  NUEVO — CÓDIGO QR CON EL LINK DE LA PÁGINA
+// ══════════════════════════════════════════
+const QR_LIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
+
+function linkPagina() { return location.origin + location.pathname; } // sin token ni parámetros
+
+function cargarLibQR() {
+  if (window.QRCode) return Promise.resolve();
+  return new Promise((res, rej) => {
+    const sc = document.createElement("script");
+    sc.src = QR_LIB;
+    sc.onload = () => res();
+    sc.onerror = () => rej(new Error("No se pudo cargar el generador de QR"));
+    document.head.appendChild(sc);
+  });
+}
+
+async function abrirModalQR() {
+  const box = document.getElementById("qr-box");
+  const url = linkPagina();
+  document.getElementById("qr-link").textContent = url;
+  document.getElementById("modal-qr").style.display = "flex";
+  box.innerHTML = '<div class="loader" style="padding:0">Generando…</div>';
+  try {
+    await cargarLibQR();
+    box.innerHTML = "";
+    new QRCode(box, { text: url, width: 220, height: 220, colorDark: "#111111", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  } catch (e) {
+    box.innerHTML = `<div class="loader err" style="padding:0">${e.message}</div>`;
+  }
+}
+
+function cerrarModalQR() { document.getElementById("modal-qr").style.display = "none"; }
+
+async function compartirLink() {
+  const url = linkPagina();
+  if (navigator.share) {
+    try { await navigator.share({ title: "Sistema de Evaluaciones Quiroz Team", text: "Sistema de Evaluaciones Quiroz Team", url }); return; }
+    catch (e) { if (e && e.name === "AbortError") return; } // el usuario canceló
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast("Link copiado al portapapeles ✓");
+  } catch (e) {
+    window.prompt("Copie el link:", url);
+  }
+}
 
 </script>
 </body>
