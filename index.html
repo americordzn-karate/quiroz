@@ -247,6 +247,24 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
 .sin-table th{background:var(--bg);padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border)}
 .sin-table td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle}
 .sin-table input[type=text]{border:1px solid var(--border);border-radius:5px;padding:5px 8px;width:100%;font-family:var(--font);font-size:.84rem}
+
+/* ── NUEVO: EDITOR DE LISTAS ── */
+.lst-tbl{width:100%;border-collapse:collapse;font-size:.86rem}
+.lst-tbl th{background:var(--bg);color:var(--ink);padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border)}
+.lst-tbl td{padding:5px 8px;border-bottom:1px solid #eee;vertical-align:middle}
+.lst-tbl tbody tr:hover{background:#fafaf8}
+.lst-tbl input[type=text],.lst-tbl select{border:1px solid var(--border);border-radius:6px;padding:6px 8px;width:100%;font-family:var(--font);font-size:.85rem;background:var(--white)}
+.lst-tbl input[type=text]{text-transform:uppercase}
+.lst-tbl .lst-err{border-color:var(--red)!important;background:var(--red-l)!important}
+.lst-del{background:none;border:none;cursor:pointer;font-size:1rem;padding:4px 8px;border-radius:6px}
+.lst-del:hover{background:var(--red-l)}
+.lst-add{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-top:1rem}
+.lst-add input,.lst-add select,.lst-paste{border:1px solid var(--border);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;background:var(--white)}
+.lst-paste{width:100%;min-height:120px;resize:vertical;margin-top:.5rem}
+.lst-estado{font-size:.8rem;font-weight:600;margin-left:auto;align-self:center}
+.lst-estado.pend{color:var(--gold)}
+.lst-estado.ok{color:var(--green)}
+.lst-help{font-size:.82rem;color:var(--ink3);line-height:1.5}
 </style>
 </head>
 <body>
@@ -302,6 +320,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
 <header class="topbar">
   <div class="brand"><img src="https://raw.githubusercontent.com/americordzn-karate/quiroz/main/logoquirozpng.png" alt="Escudo" style="width:32px;height:32px;object-fit:contain"/><span style="margin-left:8px">Sistema de Evaluaciones Quiroz Team</span></div>
   <nav class="tnav" id="tnav">
+    <button id="nb-eval" onclick="showView('v-eval')" style="display:none" title="Mi hoja de evaluación">📝</button>
     <button id="nb-principal" onclick="showView('v-principal')" style="display:none">🪪</button>
     <button id="nb-alumnos" onclick="showView('v-alumnos')" style="display:none">🥋</button>
     <button id="nb-config" onclick="showView('v-config')" style="display:none">⚙️</button>
@@ -433,6 +452,52 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
      VIEW: CONFIG
 ═══════════════════════════════════════════ -->
 <section class="view" id="v-config">
+  <!-- ═══ NUEVO: LISTAS DE ALUMNOS (sinodales 0 y 1) ═══ -->
+  <h2 class="stitle">📋 Listas de alumnos</h2>
+  <div class="card">
+    <p class="lst-help" style="margin-bottom:.75rem">Capture aquí el nombre y grado de cada alumno. El orden no importa: la hoja de cálculo los ordena automáticamente. Al terminar, pulse <strong>Guardar y cargar listas</strong> para verlos en las tarjetas de evaluación.</p>
+    <div class="gtabs" id="lst-tabs">
+      <button class="gtab on" onclick="switchLista('A',this)">Grupo A <span id="lst-cnt-A"></span></button>
+      <button class="gtab"    onclick="switchLista('B',this)">Grupo B <span id="lst-cnt-B"></span></button>
+    </div>
+    <div class="tbl-wrap" id="lst-wrap"><div class="loader">Cargando…</div></div>
+
+    <div class="lst-add">
+      <div style="display:flex;flex-direction:column;gap:4px;flex:2;min-width:180px">
+        <label style="font-size:.78rem;font-weight:600;color:var(--ink2)">Nombre</label>
+        <input id="lst-nuevo-nombre" type="text" placeholder="NOMBRE DEL ALUMNO" style="text-transform:uppercase"
+          onkeydown="if(event.key==='Enter') agregarFilaLista()"/>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;min-width:110px">
+        <label style="font-size:.78rem;font-weight:600;color:var(--ink2)">Grado (Kyu)</label>
+        <select id="lst-nuevo-grado"></select>
+      </div>
+      <button class="btn btn-ghost" onclick="agregarFilaLista()" style="height:40px">＋ Agregar a la lista</button>
+    </div>
+
+    <details style="margin-top:1rem">
+      <summary style="cursor:pointer;font-size:.86rem;font-weight:600;color:var(--ink2)">📥 Pegar lista desde Excel o WhatsApp</summary>
+      <p class="lst-help" style="margin-top:.5rem">Pegue una línea por alumno: primero el nombre y después el grado. Ejemplos válidos: <code>JUAN PÉREZ⇥9</code> (copiado de Excel), <code>Juan Pérez, 9</code>, <code>Juan Pérez - 9 Kyu</code>, <code>1. Juan Pérez 9°</code>.</p>
+      <textarea id="lst-paste" class="lst-paste" placeholder="Pegue aquí la lista…"></textarea>
+      <div class="btn-row" style="margin-top:.5rem">
+        <button class="btn btn-ghost" onclick="pegarLista(false)">➕ Agregar al final de la lista</button>
+        <button class="btn btn-ghost" onclick="pegarLista(true)">🔁 Reemplazar la lista del grupo</button>
+      </div>
+    </details>
+
+    <div class="btn-row">
+      <button class="btn btn-red" id="btn-lst-guardar" onclick="guardarListas()">✅ Guardar y cargar listas</button>
+      <button class="btn btn-ghost" onclick="cargarListas(true)">↩️ Descartar cambios</button>
+      <span class="lst-estado" id="lst-estado"></span>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:#f5c6c2">
+    <p style="font-size:.84rem;color:var(--ink3);margin-bottom:.75rem">Borra <strong>las listas de alumnos de ambos grupos (A y B)</strong> y <strong>todas las calificaciones</strong> para comenzar un examen nuevo. Esta acción no puede deshacerse.</p>
+    <button class="btn btn-red" onclick="abrirModalNuevoExamen()">🆕 NUEVO EXAMEN</button>
+  </div>
+
+  <div id="config-principal">
   <h2 class="stitle">Sinodales</h2>
   <div class="card">
     <p style="font-size:.84rem;color:var(--ink3);margin-bottom:.75rem">Defina los sinodales. El Sinodal Principal tiene número 0 y acceso a todo. Los demás solo ven su propia hoja.</p>
@@ -471,6 +536,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <p style="font-size:.84rem;color:var(--ink3);margin-bottom:.75rem">Borra todas las calificaciones de los sinodales y los concentradores. <strong>El listado de alumnos no se verá afectado.</strong> Esta acción no puede deshacerse.</p>
     <button class="btn btn-red" onclick="confirmarResetExamen()">🗑️ Limpiar calificaciones para nuevo examen</button>
   </div>
+  </div><!-- /config-principal -->
 </section>
 
 
@@ -483,6 +549,27 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="cerrarModalReset()">Cancelar</button>
       <button class="btn btn-red" id="btn-reset-confirm" onclick="ejecutarResetExamen()">🗑️ Sí, limpiar todo</button>
+    </div>
+  </div>
+</div>
+
+<!-- NUEVO: MODAL NUEVO EXAMEN -->
+<div id="modal-nuevo-examen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;padding:28px 30px;width:380px;max-width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25);display:flex;flex-direction:column;gap:14px">
+    <div style="font-family:var(--font-h);font-size:1.1rem;color:var(--red);font-weight:700">⚠️ ¿Iniciar un NUEVO EXAMEN?</div>
+    <p style="font-size:.86rem;color:var(--ink2);line-height:1.5">Se eliminarán de forma permanente:</p>
+    <ul style="font-size:.86rem;color:var(--ink2);line-height:1.6;padding-left:1.2rem">
+      <li>Las <strong>listas de alumnos</strong> del Grupo A y del Grupo B.</li>
+      <li><strong>Todas las calificaciones</strong> de todos los sinodales y los concentradores.</li>
+    </ul>
+    <p style="font-size:.82rem;color:var(--ink3)">Las fórmulas, la configuración y los sinodales se conservan. Esta acción <strong>no puede deshacerse</strong>.</p>
+    <label style="font-size:.82rem;color:var(--ink2)">Para confirmar, escriba <strong>NUEVO</strong>:
+      <input id="nuevo-examen-confirm" type="text" autocomplete="off" oninput="this.value=this.value.toUpperCase();document.getElementById('btn-nuevo-examen').disabled=this.value.trim()!=='NUEVO'"
+        style="display:block;width:100%;margin-top:6px;border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:var(--font);font-size:.9rem"/>
+    </label>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="cerrarModalNuevoExamen()">Cancelar</button>
+      <button class="btn btn-red" id="btn-nuevo-examen" onclick="ejecutarNuevoExamen()" disabled>🆕 Sí, borrar todo</button>
     </div>
   </div>
 </div>
@@ -619,6 +706,9 @@ function aplicarRol() {
     cargarEval();
     cargarDestacados("destacados-eval-wrap", gActivo.destEval);
   }
+
+  // NUEVO: acceso al editor de listas para los sinodales 0 y 1
+  aplicarAccesoListas();
 }
 // ══════════════════════════════════════════
 //  NAVEGACIÓN
@@ -627,7 +717,7 @@ function showView(id) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
   document.getElementById(id).classList.add("on");
   document.querySelectorAll(".tnav button").forEach(b => b.classList.remove("on"));
-  const map = {"v-principal":"nb-principal","v-alumnos":"nb-alumnos","v-config":"nb-config"};
+  const map = {"v-principal":"nb-principal","v-alumnos":"nb-alumnos","v-config":"nb-config","v-eval":"nb-eval"};
   const btn = document.getElementById(map[id]);
   if (btn) btn.classList.add("on");
 }
@@ -1883,6 +1973,366 @@ async function ejecutarResetExamen() {
     btn.textContent = "🗑️ Sí, limpiar todo";
   }
 }
+
+// ══════════════════════════════════════════
+//  NUEVO — EDITOR DE LISTAS DE ALUMNOS
+//  (Panel de Configuración, sinodales 0 y 1)
+// ══════════════════════════════════════════
+const listas       = { A: [], B: [] };     // [{nombre, grado:"1".."10"}]
+const listasSucias = { A: false, B: false };
+let listaActiva    = "A";
+const LISTA_PARTE  = 20;                   // alumnos por envío al servidor
+
+function puedeEditarListas() {
+  const r = parseInt(rolNum, 10);
+  return r === 0 || r === 1;
+}
+
+function aplicarAccesoListas() {
+  const r = parseInt(rolNum, 10);
+  const puede = puedeEditarListas();
+  if (puede) document.getElementById("nb-config").style.display = "";
+  // El sinodal 1 conserva su hoja de evaluación (botón 📝) y solo ve la sección de listas
+  document.getElementById("nb-eval").style.display = (r === 1) ? "" : "none";
+  const cp = document.getElementById("config-principal");
+  if (cp) cp.style.display = (r === 0) ? "" : "none";
+  if (puede) {
+    document.getElementById("lst-nuevo-grado").innerHTML = opcionesGrado("");
+    cargarListas(false);
+  }
+}
+
+function escLst(s) {
+  return (s == null ? "" : String(s))
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function gradoValido(g) { return /^(10|[1-9])$/.test(String(g)); }
+
+// "9", "9 kyu", "9°", "9no kyu", "9 Kyu." → "9"  |  inválido → ""
+function gradoDeTexto(x) {
+  const m = String(x == null ? "" : x).trim()
+    .match(/^(\d{1,2})\s*(?:°|º|no|vo|mo|ro|er|do|to)?\s*(?:kyu|kyū)?\s*\.?$/i);
+  if (!m) return "";
+  const n = parseInt(m[1], 10);
+  return (n >= 1 && n <= 10) ? String(n) : "";
+}
+
+function opcionesGrado(sel) {
+  let h = `<option value="">-- Grado --</option>`;
+  for (let n = 10; n >= 1; n--) {
+    h += `<option value="${n}"${String(sel) === String(n) ? " selected" : ""}>${n} Kyu</option>`;
+  }
+  if (sel && !gradoValido(sel)) h += `<option value="${escLst(sel)}" selected>${escLst(sel)} (revisar)</option>`;
+  return h;
+}
+
+function limpiarNombre(n) {
+  return String(n || "")
+    .replace(/[​-‍﻿]/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s,;:|.\-–—•*]+|[\s,;:|\-–—•*]+$/g, "")
+    .trim()
+    .toUpperCase();
+}
+
+function duplicados(lista) {
+  const c = {};
+  lista.forEach(a => { const k = limpiarNombre(a.nombre); if (k) c[k] = (c[k] || 0) + 1; });
+  return c;
+}
+
+function switchLista(g, btn) {
+  btn.closest(".gtabs").querySelectorAll(".gtab").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  listaActiva = g;
+  renderLista();
+}
+
+function seleccionarTabLista(g) {
+  listaActiva = g;
+  document.querySelectorAll("#lst-tabs .gtab").forEach((b, i) => {
+    b.classList.toggle("on", (i === 0 && g === "A") || (i === 1 && g === "B"));
+  });
+}
+
+function actualizarEstadoListas() {
+  ["A", "B"].forEach(x => {
+    const c = document.getElementById("lst-cnt-" + x);
+    if (c) c.textContent = `(${listas[x].length})${listasSucias[x] ? " •" : ""}`;
+  });
+  const est = document.getElementById("lst-estado");
+  if (!est) return;
+  if (listasSucias.A || listasSucias.B) {
+    est.className = "lst-estado pend";
+    est.textContent = "● Cambios sin guardar";
+  } else {
+    est.className = "lst-estado ok";
+    est.textContent = "✓ Listas guardadas";
+  }
+}
+
+function marcarSucia(g) { listasSucias[g] = true; actualizarEstadoListas(); }
+
+function renderLista() {
+  const g = listaActiva, lista = listas[g];
+  const wrap = document.getElementById("lst-wrap");
+  actualizarEstadoListas();
+  if (!lista.length) {
+    wrap.innerHTML = '<div class="loader">La lista de este grupo está vacía. Agregue alumnos abajo o pegue una lista.</div>';
+    return;
+  }
+  const dup = duplicados(lista);
+  let h = `<table class="lst-tbl"><thead><tr>
+    <th style="width:44px">#</th><th>Nombre</th><th style="width:140px">Grado</th><th style="width:48px"></th>
+  </tr></thead><tbody>`;
+  lista.forEach((a, i) => {
+    const k = limpiarNombre(a.nombre);
+    const esDup = k && dup[k] > 1;
+    const errN = !k || esDup;
+    const errG = !gradoValido(a.grado);
+    h += `<tr>
+      <td>${i + 1}</td>
+      <td><input type="text" value="${escLst(a.nombre)}" class="${errN ? "lst-err" : ""}"
+            title="${esDup ? "Nombre repetido en este grupo" : ""}"
+            oninput="editarFila(${i},'nombre',this.value)" onchange="renderLista()"/></td>
+      <td><select class="${errG ? "lst-err" : ""}" onchange="editarFila(${i},'grado',this.value);renderLista()">${opcionesGrado(a.grado)}</select></td>
+      <td><button class="lst-del" title="Eliminar alumno" onclick="eliminarFila(${i})">🗑️</button></td>
+    </tr>`;
+  });
+  h += `</tbody></table>`;
+  wrap.innerHTML = h;
+}
+
+function editarFila(i, campo, valor) {
+  const a = listas[listaActiva][i];
+  if (!a) return;
+  a[campo] = campo === "nombre" ? String(valor).toUpperCase() : String(valor);
+  marcarSucia(listaActiva);
+}
+
+function eliminarFila(i) {
+  listas[listaActiva].splice(i, 1);
+  marcarSucia(listaActiva);
+  renderLista();
+}
+
+function agregarFilaLista() {
+  const inpN = document.getElementById("lst-nuevo-nombre");
+  const selG = document.getElementById("lst-nuevo-grado");
+  const nombre = limpiarNombre(inpN.value);
+  const grado = selG.value;
+  if (!nombre) { toast("Ingrese el nombre del alumno.", true); inpN.focus(); return; }
+  if (!gradoValido(grado)) { toast("Seleccione el grado del alumno.", true); selG.focus(); return; }
+  if (duplicados(listas[listaActiva])[nombre]) {
+    toast(`${nombre} ya está en el Grupo ${listaActiva}.`, true); inpN.focus(); return;
+  }
+  listas[listaActiva].push({ nombre, grado });
+  marcarSucia(listaActiva);
+  renderLista();
+  inpN.value = "";
+  inpN.focus(); // el grado se conserva para capturar varios alumnos del mismo grado
+}
+
+// Interpreta una línea pegada desde Excel o WhatsApp → {nombre, grado} | null
+function parsearLinea(linea) {
+  let t = String(linea || "")
+    .replace(/[​-‍﻿]/g, "")
+    .replace(/ /g, " ")
+    .replace(/^\s*\[[^\]]*\]\s*[^:]{1,40}:\s*/, "")   // prefijo de WhatsApp "[fecha] Nombre: "
+    .trim();
+  if (!t) return null;
+
+  let nombre = "", grado = "";
+
+  if (t.includes("\t")) {
+    // Copiado de Excel: columnas separadas por tabulador
+    const partes = t.split("\t").map(x => x.trim()).filter(Boolean);
+    for (let i = partes.length - 1; i >= 0; i--) {
+      const g = gradoDeTexto(partes[i]);
+      if (g) { grado = g; partes.splice(i, 1); break; }
+    }
+    nombre = partes.filter(p => /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/.test(p)).join(" ");
+  } else {
+    t = t.replace(/[()\[\]]/g, " ")
+         .replace(/^\s*[•*\-–—]\s*/, "")              // viñetas
+         .replace(/^\s*\d{1,3}\s*[.)\-–:]\s*/, "")    // numeración "1." "1)" "1-"
+         .trim();
+    const m = t.match(/^(.*?[^\d\s,;:|\-–—])[\s,;:|\-–—]+(\d{1,2}\s*(?:°|º|no|vo|mo|ro|er|do|to)?\s*(?:kyu|kyū)?\s*\.?)\s*$/i);
+    if (m) { nombre = m[1]; grado = gradoDeTexto(m[2]); }
+    else   { nombre = t; }
+  }
+
+  nombre = limpiarNombre(nombre);
+  if (!nombre) return null;
+  // Encabezados como "Nombre", "Nombre Grado", "No. Alumno Grado"
+  if (!grado && /^(N[OÚ]M(ERO)?\.?\s+|NO\.?\s+|#\s*)?(NOMBRES?|ALUMNOS?)(\s+(DEL|ALUMNO|GRADO|KYU|CINTA))*$/.test(nombre)) return null;
+  return { nombre, grado };
+}
+
+function pegarLista(reemplazar) {
+  const ta = document.getElementById("lst-paste");
+  const filas = ta.value.split(/\r?\n/).map(parsearLinea).filter(Boolean);
+  if (!filas.length) { toast("No se encontraron alumnos en el texto pegado.", true); return; }
+
+  const g = listaActiva;
+  if (reemplazar && listas[g].length &&
+      !confirm(`¿Reemplazar los ${listas[g].length} alumnos del Grupo ${g} por los ${filas.length} pegados?\n(No se guarda nada hasta que pulse "Guardar y cargar listas").`)) {
+    return;
+  }
+  if (reemplazar) listas[g] = [];
+
+  const existentes = duplicados(listas[g]);
+  let agregados = 0, repetidos = 0, sinGrado = 0;
+  filas.forEach(f => {
+    if (existentes[f.nombre]) { repetidos++; return; }
+    existentes[f.nombre] = 1;
+    listas[g].push(f);
+    agregados++;
+    if (!f.grado) sinGrado++;
+  });
+  ta.value = "";
+  marcarSucia(g);
+  renderLista();
+
+  let msg = `${agregados} alumno(s) agregados al Grupo ${g}.`;
+  if (repetidos) msg += ` ${repetidos} repetido(s) omitidos.`;
+  if (sinGrado)  msg += ` ${sinGrado} sin grado: selecciónelo en la tabla (marcados en rojo).`;
+  toast(msg, sinGrado > 0);
+}
+
+async function cargarListas(descartar) {
+  if (descartar && (listasSucias.A || listasSucias.B) &&
+      !confirm("¿Descartar los cambios no guardados y volver a leer las listas de la hoja?")) return;
+  const wrap = document.getElementById("lst-wrap");
+  wrap.innerHTML = '<div class="loader">Cargando listas…</div>';
+  try {
+    const [ra, rb] = await Promise.all([get("getListaBase", { grupo: "A" }), get("getListaBase", { grupo: "B" })]);
+    listas.A = (ra.lista || []).map(a => ({ nombre: limpiarNombre(a.nombre), grado: gradoDeTexto(a.grado) || String(a.grado || "") }));
+    listas.B = (rb.lista || []).map(a => ({ nombre: limpiarNombre(a.nombre), grado: gradoDeTexto(a.grado) || String(a.grado || "") }));
+    listasSucias.A = listasSucias.B = false;
+    renderLista();
+  } catch (e) {
+    wrap.innerHTML = `<div class="loader err">Error al leer las listas: ${escLst(e.message)}<br><small>Verifique que el script tenga la versión nueva desplegada.</small></div>`;
+  }
+}
+
+function validarLista(g) {
+  const dup = duplicados(listas[g]);
+  for (let i = 0; i < listas[g].length; i++) {
+    const a = listas[g][i], k = limpiarNombre(a.nombre);
+    if (!k) return `Grupo ${g}, fila ${i + 1}: falta el nombre.`;
+    if (!gradoValido(a.grado)) return `Grupo ${g}, fila ${i + 1} (${k}): seleccione el grado.`;
+    if (dup[k] > 1) return `Grupo ${g}: ${k} está repetido.`;
+  }
+  return "";
+}
+
+async function guardarGrupoLista(g) {
+  // 1. Recordar quién estaba marcado como ausente para conservarlo
+  let ausentes = [];
+  try {
+    const r = await get("getAlumnos", { grupo: g });
+    ausentes = (r.alumnos || []).filter(a => a.presente === false).map(a => limpiarNombre(a.nombre));
+  } catch (e) { /* si falla, todos quedan presentes */ }
+
+  // 2. Enviar la lista por partes (la primera parte borra la lista anterior)
+  const filas = listas[g].map(a => [limpiarNombre(a.nombre), a.grado]);
+  if (!filas.length) {
+    await post("saveListaAlumnos", { grupo: g }, { inicio: 0, filas: [] });
+  } else {
+    for (let i = 0; i < filas.length; i += LISTA_PARTE) {
+      await post("saveListaAlumnos", { grupo: g }, { inicio: i, filas: filas.slice(i, i + LISTA_PARTE) });
+    }
+  }
+
+  // 3. Realinear la casilla "Presente" con la lista ya ordenada por la hoja
+  const vigentes = {};
+  filas.forEach(f => { vigentes[f[0]] = true; });
+  await post("alinearAsistencia", { grupo: g }, { ausentes: ausentes.filter(n => vigentes[n]) });
+  listasSucias[g] = false;
+}
+
+async function guardarListas() {
+  for (const g of ["A", "B"]) {
+    const err = validarLista(g);
+    if (err) { seleccionarTabLista(g); renderLista(); toast(err, true); return; }
+  }
+  const btn = document.getElementById("btn-lst-guardar");
+  btn.disabled = true;
+  try {
+    for (const g of ["A", "B"]) {
+      if (!listasSucias[g]) continue;
+      btn.textContent = `Guardando Grupo ${g}…`;
+      await guardarGrupoLista(g);
+    }
+    actualizarEstadoListas();
+    toast("Listas guardadas y cargadas ✓");
+    refrescarVistasTrasListas();
+  } catch (e) {
+    toast("Error al guardar: " + e.message + ". Vuelva a pulsar Guardar.", true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✅ Guardar y cargar listas";
+  }
+}
+
+// Vuelve a la vista de tarjetas con las listas recién guardadas
+function refrescarVistasTrasListas() {
+  const r = parseInt(rolNum, 10);
+  if (r === 0) {
+    showView("v-principal");
+    cargarPrincipal();
+    cargarConcentrador();
+    cargarAlumnos();
+    cargarDestacados("destacados-prin-wrap", gActivo.destPrin);
+  } else {
+    showView("v-eval");
+    cargarEval();
+    cargarDestacados("destacados-eval-wrap", gActivo.destEval);
+  }
+}
+
+// ── NUEVO EXAMEN ──
+function abrirModalNuevoExamen() {
+  const inp = document.getElementById("nuevo-examen-confirm");
+  inp.value = "";
+  document.getElementById("btn-nuevo-examen").disabled = true;
+  document.getElementById("modal-nuevo-examen").style.display = "flex";
+  setTimeout(() => inp.focus(), 50);
+}
+
+function cerrarModalNuevoExamen() {
+  document.getElementById("modal-nuevo-examen").style.display = "none";
+}
+
+async function ejecutarNuevoExamen() {
+  const btn = document.getElementById("btn-nuevo-examen");
+  btn.disabled = true;
+  btn.textContent = "Borrando…";
+  try {
+    const r = await get("nuevoExamen");
+    cerrarModalNuevoExamen();
+    ["A", "B"].forEach(g => {
+      buf.eval[g] = {}; buf.prin[g] = {};
+      alumnos[g] = [];
+      listas[g] = []; listasSucias[g] = false;
+    });
+    seleccionarTabLista("A");
+    renderLista();
+    toast(r.message || "Nuevo examen listo ✓");
+  } catch (e) {
+    cerrarModalNuevoExamen();
+    toast("Error: " + e.message, true);
+  } finally {
+    btn.textContent = "🆕 Sí, borrar todo";
+  }
+}
+
+// Aviso si se intenta cerrar la página con cambios sin guardar
+window.addEventListener("beforeunload", (e) => {
+  if (listasSucias.A || listasSucias.B) { e.preventDefault(); e.returnValue = ""; }
+});
 
 </script>
 </body>
