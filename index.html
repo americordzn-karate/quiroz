@@ -265,6 +265,12 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
 .reg-acc .reg-env{background:var(--red);border-color:var(--red);color:#fff}
 .reg-acc .reg-env:disabled{background:var(--green-bg);border-color:var(--green-bg);color:var(--green);cursor:default}
 
+.reg-sug{position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:50;max-height:260px;overflow:auto}
+.reg-sug-h{font-size:.72rem;font-weight:600;color:var(--ink3);padding:7px 12px;border-bottom:1px solid #eee;background:#fafaf8}
+.reg-sug-i{padding:7px 12px;font-size:.84rem;cursor:pointer;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #f3f3f3;color:var(--ink)}
+.reg-sug-i:hover{background:#eef4ff}
+.reg-sug-i small{color:var(--ink3);white-space:nowrap}
+
 /* ── NUEVO: EDITOR DE LISTAS ── */
 .lst-tbl{width:100%;border-collapse:collapse;font-size:.86rem}
 .lst-tbl th{background:var(--bg);color:var(--ink);padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border)}
@@ -559,9 +565,13 @@ hr.div{border-top-color:var(--line-dark)}
   <h2 class="stitle">📚 Registro de alumnos</h2>
   <div class="card">
     <div class="reg-form">
-      <div class="reg-campo" style="flex:2;min-width:200px">
+      <div class="reg-campo" style="flex:2;min-width:200px;position:relative">
         <label>Nombre</label>
-        <input id="reg-nombre" type="text" placeholder="NOMBRE DEL ALUMNO" onkeydown="if(event.key==='Enter') agregarRegistro()"/>
+        <input id="reg-nombre" type="text" placeholder="NOMBRE DEL ALUMNO" autocomplete="off"
+          onkeydown="if(event.key==='Enter'){ocultarSugerencias();agregarRegistro()} else if(event.key==='Escape') ocultarSugerencias()"
+          oninput="mostrarSugerencias()" onfocus="mostrarSugerencias()" onblur="setTimeout(ocultarSugerencias,200)"/>
+        <!-- NUEVO: alumnos ya registrados que coinciden con lo que se escribe -->
+        <div id="reg-sugerencias" class="reg-sug" style="display:none"></div>
       </div>
       <div class="reg-campo" style="min-width:120px">
         <label>Dojo</label>
@@ -2828,6 +2838,7 @@ async function agregarRegistro() {
     const r = await post("addRegistroAlumno", {}, data);
     registro.push({ id: r.id, ...data, enExamen: false });
     document.getElementById("reg-nombre").value = "";
+    ocultarSugerencias();
     document.getElementById("reg-fecha").value = "";
     document.getElementById("reg-nombre").focus(); // dojo y grado se conservan
     renderRegistro();
@@ -2971,6 +2982,45 @@ async function verHistorial(id) {
 }
 
 function cerrarHistorial() { document.getElementById("modal-hist").style.display = "none"; }
+
+// ══════════════════════════════════════════
+//  NUEVO — SUGERENCIAS AL ESCRIBIR EL NOMBRE (registro)
+//  Muestra los alumnos ya registrados (de todos los dojos) cuyo nombre
+//  contiene lo escrito, sin distinguir acentos ni mayúsculas.
+// ══════════════════════════════════════════
+function mostrarSugerencias() {
+  const box = document.getElementById("reg-sugerencias");
+  const q = claveNom(document.getElementById("reg-nombre").value);
+  if (q.length < 2) { box.style.display = "none"; return; }
+  const m = registro.filter(a => claveNom(a.nombre).includes(q))
+    .sort((x, y) => String(x.nombre).localeCompare(String(y.nombre), "es", { sensitivity: "base" }));
+  if (!m.length) {
+    box.innerHTML = '<div class="reg-sug-h">✓ No hay alumnos registrados con ese nombre</div>';
+  } else {
+    box.innerHTML = `<div class="reg-sug-h">Ya registrados (${m.length}) · clic para ver en la tabla</div>` +
+      m.slice(0, 10).map(a => `<div class="reg-sug-i" onmousedown="event.preventDefault();irASugerencia('${a.id}')">
+        <span>${escLst(a.nombre)}</span><small>${escLst(a.dojo)} · ${escLst(a.grado)}</small></div>`).join("") +
+      (m.length > 10 ? `<div class="reg-sug-h">… y ${m.length - 10} más</div>` : "");
+  }
+  box.style.display = "";
+}
+
+function ocultarSugerencias() {
+  const box = document.getElementById("reg-sugerencias");
+  if (box) box.style.display = "none";
+}
+
+// Muestra en la tabla al alumno elegido (pestaña Todos + buscador)
+function irASugerencia(id) {
+  const a = registro.find(x => x.id === id);
+  if (!a) return;
+  ocultarSugerencias();
+  const tab = document.querySelector('#reg-tabs [data-dojo="Todos"]');
+  if (tab) switchDojo("Todos", tab);
+  document.getElementById("reg-buscar").value = a.nombre;
+  renderRegistro();
+  document.getElementById("reg-wrap").scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 </script>
 </body>
