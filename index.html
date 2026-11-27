@@ -282,6 +282,38 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
 .lst-estado.pend{color:var(--gold)}
 .lst-estado.ok{color:var(--green)}
 .lst-help{font-size:.82rem;color:var(--ink3);line-height:1.5}
+
+/* ══ NUEVO: TEMA OSCURO (fondo gris oscuro, títulos blancos, botones azules) ══ */
+:root{--blue:#1f6feb;--blue-d:#1858c4;--bg-dark:#2d3138;--on-dark:#ffffff;--on-dark-2:#c9ced6;--line-dark:rgba(255,255,255,.22)}
+body{background:var(--bg-dark)}
+/* Títulos de sección y su línea */
+.stitle{color:var(--on-dark)}
+.stitle::after{background:var(--line-dark)}
+.stitle[style*="color:var(--red)"]{color:#ff8a80!important}
+hr.div{border-top-color:var(--line-dark)}
+/* Pestañas que están sobre el fondo (fuera de tarjetas) */
+.view > .gtabs, .view > div > .gtabs{border-bottom-color:var(--line-dark)}
+.view > .gtabs .gtab, .view > div > .gtabs .gtab{color:var(--on-dark-2)}
+.gtab.on{color:#6ea8ff;border-bottom-color:#6ea8ff}
+/* Textos pequeños y mensajes sobre el fondo */
+.view > .lst-help, .view > div > .lst-help{color:var(--on-dark-2)}
+.view .loader:not(.card .loader):not(.ficha .loader){color:var(--on-dark-2)}
+.view .loader.err:not(.card .loader){color:#ff8a80}
+/* Botones fuera de tarjetas */
+.view > .btn-row .btn-ghost, .view > div > .btn-row .btn-ghost, .view > div > .btn-ghost, .view > div > div > .btn-ghost{color:var(--on-dark);border-color:rgba(255,255,255,.4)}
+.view > .btn-row .btn-ghost:hover, .view > div > .btn-row .btn-ghost:hover, .view > div > .btn-ghost:hover, .view > div > div > .btn-ghost:hover{background:rgba(255,255,255,.1)}
+/* Botones rojos → azules */
+.btn-red{background:var(--blue)}
+.btn-red:hover{background:var(--blue-d)}
+.tnav button:hover,.tnav button.on{background:var(--blue);border-color:var(--blue)}
+.asp-btn:hover{border-color:var(--blue);color:var(--blue)}
+.asp-btn.sel{background:var(--blue);border-color:var(--blue);color:#fff}
+.reg-acc .reg-env{background:var(--blue);border-color:var(--blue)}
+.view > .gtabs .gtab.on, .view > div > .gtabs .gtab.on{color:#6ea8ff}
+.view > .btn-row .btn-dark, .view > div > .btn-row .btn-dark{border:1px solid rgba(255,255,255,.4)}
+.sin-table th{color:var(--ink)} /* encabezado de la tabla de sinodales (texto blanco sobre fondo claro) */
+/* Avisos: borde para que se distingan del fondo */
+#toast{border:1px solid rgba(255,255,255,.25);box-shadow:0 4px 16px rgba(0,0,0,.35)}
 </style>
 </head>
 <body>
@@ -556,7 +588,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <button class="btn btn-ghost" onclick="cargarRegistro()">🔄 Recargar</button>
   </div>
   <div class="card tbl-wrap" id="reg-wrap" style="padding:0"><div class="loader">Cargando…</div></div>
-  <p class="lst-help">➡️ <strong>Enviar a examen</strong> agrega al alumno a la lista del Grupo A (Hoja 1) con su nombre y grado. Al pulsar <strong>Subir Calificaciones</strong> (debajo del concentrador), los alumnos aprobados del Grupo A suben un grado, se registra la fecha de su último examen y se agrega a su historial. Haga clic en el nombre de un alumno para ver su historial.</p>
+  <p class="lst-help" id="reg-ayuda">➡️ <strong>Enviar a examen</strong> agrega al alumno a la lista del Grupo A (Hoja 1) con su nombre y grado. Al pulsar <strong>Subir Calificaciones</strong> (debajo del concentrador), los alumnos aprobados del Grupo A suben un grado, se registra la fecha de su último examen y se agrega a su historial. Haga clic en el nombre de un alumno para ver su historial.</p>
   </div><!-- /reg-seccion -->
 
   <div id="nuevo-examen-seccion" style="display:none">
@@ -567,12 +599,14 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
   </div><!-- /nuevo-examen-seccion -->
 
 
+  <div id="listado-general-seccion"><!-- NUEVO: contenedor (oculto para sinodales con número negativo) -->
   <h2 class="stitle">Listado General de Alumnos</h2>
   <div class="gtabs">
     <button class="gtab on" onclick="switchGrupo('alum','A',this)">Grupo A</button>
     <button class="gtab"    onclick="switchGrupo('alum','B',this)">Grupo B</button>
   </div>
   <div class="card tbl-wrap" id="alum-wrap"><div class="loader">Cargando…</div></div>
+  </div><!-- /listado-general-seccion -->
 </section>
 
 <!-- ══════════════════════════════════════════
@@ -2132,6 +2166,15 @@ function aplicarAccesoListas() {
     cargarListas(false);
     cargarRegistro();
   }
+  // NUEVO: sinodales con número negativo → solo la vista Registro de alumnos
+  if (r < 0) {
+    document.getElementById("reg-seccion").style.display = "";
+    document.getElementById("listado-general-seccion").style.display = "none";
+    document.getElementById("nuevo-examen-seccion").style.display = "none";
+    document.getElementById("reg-ayuda").textContent = "Haga clic en el nombre de un alumno para ver su historial de exámenes.";
+    showView("v-alumnos");
+    cargarRegistro();
+  }
 }
 
 function escLst(s) {
@@ -2735,6 +2778,7 @@ function renderRegistro() {
       return;
     }
     const ya = !!enExamen[a.id];
+    const soloRegistro = parseInt(rolNum, 10) < 0; // espectador: sin Eliminar ni Enviar a examen
     h += `<tr>
       <td>${escLst(a.id)}</td>
       <td><a href="#" onclick="verHistorial('${a.id}');return false" title="Ver historial de exámenes" style="color:var(--ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--ink4)">${escLst(a.nombre)}</a></td>
@@ -2743,9 +2787,9 @@ function renderRegistro() {
       <td>${fechaCorta(a.ultimoExamen)}</td>
       <td><div class="reg-acc">
         <button title="Editar" onclick="regEditando='${a.id}';renderRegistro()">✏️</button>
-        <button title="Eliminar" onclick="eliminarRegistro('${a.id}')">🗑️</button>
-        <button class="reg-env" ${ya ? "disabled" : ""} title="${ya ? "Ya está en la lista de examen" : "Enviar a la lista de examen (Grupo A)"}"
-          onclick="enviarRegistroAExamen('${a.id}',this)">${ya ? "✓ En examen" : "➡️ Enviar a examen"}</button>
+        ${soloRegistro ? "" : `<button title="Eliminar" onclick="eliminarRegistro('${a.id}')">🗑️</button>`}
+        ${soloRegistro ? "" : `<button class="reg-env" ${ya ? "disabled" : ""} title="${ya ? "Ya está en la lista de examen" : "Enviar a la lista de examen (Grupo A)"}"
+          onclick="enviarRegistroAExamen('${a.id}',this)">${ya ? "✓ En examen" : "➡️ Enviar a examen"}</button>`}
       </div></td></tr>`;
   });
   h += `</tbody></table>`;
