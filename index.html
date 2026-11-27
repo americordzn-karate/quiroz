@@ -2733,6 +2733,15 @@ async function cargarRegistro() {
   }
 }
 
+// Orden por grado: 10 kyu → 1 kyu, luego CN 1 dan, CN 2 dan…; grados no reconocidos al final
+function rangoGrado(g) {
+  const t = String(g || "").toUpperCase().trim();
+  const cn = t.match(/^CN\s*(\d{1,2})/) || t.match(/^(\d{1,2})\s*(?:ER|DO|RO|TO|O|°|º)?\s*DAN\b/);
+  if (cn) return 100 + parseInt(cn[1], 10);
+  const k = t.match(/(\d{1,2})/);
+  return k ? 10 - parseInt(k[1], 10) : 1000;
+}
+
 function switchDojo(d, btn) {
   btn.closest(".gtabs").querySelectorAll(".gtab").forEach(b => b.classList.remove("on"));
   btn.classList.add("on");
@@ -2752,7 +2761,9 @@ function renderRegistro() {
   const q = normNom(document.getElementById("reg-buscar").value);
   const lista = registro
     .filter(a => dojoActivo === "Todos" || dojoDePestana(a.dojo) === dojoActivo)
-    .filter(a => !q || normNom(a.nombre).includes(q) || String(a.id).includes(q));
+    .filter(a => !q || normNom(a.nombre).includes(q) || String(a.id).includes(q))
+    .sort((x, y) => rangoGrado(x.grado) - rangoGrado(y.grado) ||
+                    String(x.nombre).localeCompare(String(y.nombre), "es", { sensitivity: "base" }));
 
   const wrap = document.getElementById("reg-wrap");
   if (!lista.length) {
