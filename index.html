@@ -300,8 +300,8 @@ hr.div{border-top-color:var(--line-dark)}
 .view .loader:not(.card .loader):not(.ficha .loader){color:var(--on-dark-2)}
 .view .loader.err:not(.card .loader){color:#ff8a80}
 /* Botones fuera de tarjetas */
-.view > .btn-row .btn-ghost, .view > div > .btn-row .btn-ghost, .view > div > .btn-ghost, .view > div > div > .btn-ghost{color:var(--on-dark);border-color:rgba(255,255,255,.4)}
-.view > .btn-row .btn-ghost:hover, .view > div > .btn-row .btn-ghost:hover, .view > div > .btn-ghost:hover, .view > div > div > .btn-ghost:hover{background:rgba(255,255,255,.1)}
+.view .btn-ghost:not(.card .btn-ghost):not(.ficha .btn-ghost){color:var(--on-dark);border-color:rgba(255,255,255,.4)}
+.view .btn-ghost:not(.card .btn-ghost):not(.ficha .btn-ghost):hover{background:rgba(255,255,255,.1)}
 /* Botones rojos → azules */
 .btn-red{background:var(--blue)}
 .btn-red:hover{background:var(--blue-d)}
@@ -310,7 +310,10 @@ hr.div{border-top-color:var(--line-dark)}
 .asp-btn.sel{background:var(--blue);border-color:var(--blue);color:#fff}
 .reg-acc .reg-env{background:var(--blue);border-color:var(--blue)}
 .view > .gtabs .gtab.on, .view > div > .gtabs .gtab.on{color:#6ea8ff}
-.view > .btn-row .btn-dark, .view > div > .btn-row .btn-dark{border:1px solid rgba(255,255,255,.4)}
+.view .btn-dark:not(.card .btn-dark){border:1px solid rgba(255,255,255,.4)}
+/* Botón "Agregar sinodal" en azul */
+.card > .btn-ghost[onclick="addSinodalRow()"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.card > .btn-ghost[onclick="addSinodalRow()"]:hover{background:var(--blue-d)}
 .sin-table th{color:var(--ink)} /* encabezado de la tabla de sinodales (texto blanco sobre fondo claro) */
 /* Avisos: borde para que se distingan del fondo */
 #toast{border:1px solid rgba(255,255,255,.25);box-shadow:0 4px 16px rgba(0,0,0,.35)}
