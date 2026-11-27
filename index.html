@@ -248,6 +248,23 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
 .sin-table td{padding:7px 10px;border-bottom:1px solid #eee;vertical-align:middle}
 .sin-table input[type=text]{border:1px solid var(--border);border-radius:5px;padding:5px 8px;width:100%;font-family:var(--font);font-size:.84rem}
 
+/* ── NUEVO: REGISTRO DE ALUMNOS ── */
+.reg-form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.reg-form label{font-size:.78rem;font-weight:600;color:var(--ink2)}
+.reg-form input,.reg-form select,.reg-tbl input,.reg-tbl select,.reg-buscar{border:1px solid var(--border);border-radius:7px;padding:8px 10px;font-family:var(--font);font-size:.86rem;background:var(--white)}
+.reg-form input[type=text],.reg-tbl input[type=text]{text-transform:uppercase}
+.reg-campo{display:flex;flex-direction:column;gap:4px}
+.reg-tabs{flex-wrap:wrap}
+.reg-tbl{width:100%;border-collapse:collapse;font-size:.85rem}
+.reg-tbl th{background:var(--ink);color:#fff;padding:8px 10px;text-align:left;font-weight:500;white-space:nowrap}
+.reg-tbl td{padding:6px 10px;border-bottom:1px solid #eee;vertical-align:middle}
+.reg-tbl tbody tr:hover{background:#fafaf8}
+.reg-acc{display:flex;gap:4px;justify-content:flex-end;white-space:nowrap}
+.reg-acc button{border:1px solid var(--border);background:var(--white);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:.8rem;font-family:var(--font)}
+.reg-acc button:hover{background:#f0ede8}
+.reg-acc .reg-env{background:var(--red);border-color:var(--red);color:#fff}
+.reg-acc .reg-env:disabled{background:var(--green-bg);border-color:var(--green-bg);color:var(--green);cursor:default}
+
 /* ── NUEVO: EDITOR DE LISTAS ── */
 .lst-tbl{width:100%;border-collapse:collapse;font-size:.86rem}
 .lst-tbl th{background:var(--bg);color:var(--ink);padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border)}
@@ -329,6 +346,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <button id="nb-principal" onclick="showView('v-principal')" style="display:none">🪪</button>
     <button id="nb-alumnos" onclick="showView('v-alumnos')" style="display:none">🥋</button>
     <button id="nb-config" onclick="showView('v-config')" style="display:none">⚙️</button>
+    <button id="nb-registro" onclick="showView('v-registro');cargarRegistro()" style="display:none" title="Registro de alumnos">📚</button>
     <button id="nb-qr" onclick="abrirModalQR()" style="display:none" title="Código QR de la página">🔳</button>
   </nav>
 </header>
@@ -391,6 +409,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
   </div>
   <div id="destacados-prin-wrap"><div class="loader">Cargando…</div></div>
 
+  <div id="conc-seccion"><!-- NUEVO: contenedor (se muestra también al sinodal 1) -->
   <hr class="div"/>
   <h2 class="stitle">Concentrador</h2>
   <div class="gtabs">
@@ -402,6 +421,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <button class="btn btn-ghost" onclick="cargarConcentrador()">🔄 Actualizar concentrador</button>
     <button class="btn btn-dark" onclick="generarPDFConcentrador()">📄 Exportar PDF</button>
   </div>
+  </div><!-- /conc-seccion -->
 </section>
 
 <!-- ══════════════════════════════════════════
@@ -505,6 +525,48 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <button class="gtab"    onclick="switchGrupo('alum','B',this)">Grupo B</button>
   </div>
   <div class="card tbl-wrap" id="alum-wrap"><div class="loader">Cargando…</div></div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     NUEVO — VIEW: REGISTRO DE ALUMNOS (sinodales 0 y 1)
+═══════════════════════════════════════════ -->
+<section class="view" id="v-registro">
+  <h2 class="stitle">📚 Registro de alumnos</h2>
+  <div class="card">
+    <div class="reg-form">
+      <div class="reg-campo" style="flex:2;min-width:200px">
+        <label>Nombre</label>
+        <input id="reg-nombre" type="text" placeholder="NOMBRE DEL ALUMNO" onkeydown="if(event.key==='Enter') agregarRegistro()"/>
+      </div>
+      <div class="reg-campo" style="min-width:120px">
+        <label>Dojo</label>
+        <select id="reg-dojo"></select>
+      </div>
+      <div class="reg-campo" style="min-width:130px">
+        <label>Grado actual</label>
+        <select id="reg-grado"></select>
+      </div>
+      <div class="reg-campo" style="min-width:140px">
+        <label>Último examen (opcional)</label>
+        <input id="reg-fecha" type="date"/>
+      </div>
+      <button class="btn btn-red" id="btn-reg-agregar" onclick="agregarRegistro()" style="height:38px">＋ Agregar alumno</button>
+    </div>
+  </div>
+
+  <div class="gtabs reg-tabs" id="reg-tabs">
+    <button class="gtab on" data-dojo="Todos" onclick="switchDojo('Todos',this)">Todos <span></span></button>
+    <button class="gtab" data-dojo="TEC"   onclick="switchDojo('TEC',this)">TEC <span></span></button>
+    <button class="gtab" data-dojo="UTT"   onclick="switchDojo('UTT',this)">UTT <span></span></button>
+    <button class="gtab" data-dojo="UAT"   onclick="switchDojo('UAT',this)">UAT <span></span></button>
+    <button class="gtab" data-dojo="Otro"  onclick="switchDojo('Otro',this)">Otro <span></span></button>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.75rem">
+    <input id="reg-buscar" class="reg-buscar" type="search" placeholder="🔍 Buscar por nombre o ID…" oninput="renderRegistro()" style="flex:1;min-width:200px"/>
+    <button class="btn btn-ghost" onclick="cargarRegistro()">🔄 Recargar</button>
+  </div>
+  <div class="card tbl-wrap" id="reg-wrap" style="padding:0"><div class="loader">Cargando…</div></div>
+  <p class="lst-help">➡️ <strong>Enviar a examen</strong> agrega al alumno a la lista del Grupo A (Hoja 1) con su nombre y grado. Al exportar el PDF del concentrador del Grupo A, los alumnos con promedio final mayor a 6 suben un grado y se registra la fecha de su último examen.</p>
 </section>
 
 <!-- ══════════════════════════════════════════
@@ -650,7 +712,7 @@ const CINTA_COLORES = {
 };
 
 function cintaHTML(grado) {
-  const c = CINTA_COLORES[grado] || { bg: "#cccccc" };
+  const c = CINTA_COLORES[grado] || (/^CN/i.test(grado || "") ? { bg: "#111111" } : { bg: "#cccccc" }); // NUEVO: CN = cinta negra
   const inner = c.inner
     ? `<div class="cinta-inner" style="background:${c.inner}"></div>`
     : "";
@@ -744,7 +806,7 @@ function showView(id) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("on"));
   document.getElementById(id).classList.add("on");
   document.querySelectorAll(".tnav button").forEach(b => b.classList.remove("on"));
-  const map = {"v-principal":"nb-principal","v-alumnos":"nb-alumnos","v-config":"nb-config","v-eval":"nb-eval"};
+  const map = {"v-principal":"nb-principal","v-alumnos":"nb-alumnos","v-config":"nb-config","v-eval":"nb-eval","v-registro":"nb-registro"};
   const btn = document.getElementById(map[id]);
   if (btn) btn.classList.add("on");
 }
@@ -1969,6 +2031,7 @@ async function generarPDFConcentrador() {
   const fn = `concentrador_grupo${grupo}_${ahora.getFullYear()}${String(ahora.getMonth()+1).padStart(2,"0")}${String(ahora.getDate()).padStart(2,"0")}.pdf`;
   doc.save(fn);
   toast("PDF generado ✓");
+  if (grupo === "A") registrarExamenTrasPDF(); // NUEVO: actualiza Último examen y grado en el registro
 }
 
 // ══════════════════════════════════════════
@@ -2025,6 +2088,13 @@ function aplicarAccesoListas() {
   if (puede) {
     document.getElementById("nb-config").style.display = "";
     document.getElementById("nb-alumnos").style.display = "";
+    document.getElementById("nb-registro").style.display = ""; // NUEVO: registro de alumnos
+  }
+  // NUEVO: el sinodal 1 también ve el Concentrador (debajo de su hoja de evaluación)
+  if (r === 1) {
+    const cs = document.getElementById("conc-seccion");
+    if (cs) document.getElementById("v-eval").appendChild(cs);
+    cargarConcentrador();
   }
   // La sección de listas (en la vista 🥋 Alumnos) solo la ven los sinodales 0 y 1
   document.getElementById("lst-seccion").style.display = puede ? "" : "none";
@@ -2045,10 +2115,12 @@ function escLst(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-function gradoValido(g) { return /^(10|[1-9])$/.test(String(g)); }
+function gradoValido(g) { return /^(10|[1-9]|CN\d{1,2})$/.test(String(g)); }
 
 // "9", "9 kyu", "9°", "9no kyu", "9 Kyu." → "9"  |  inválido → ""
 function gradoDeTexto(x) {
+  const cn = String(x == null ? "" : x).trim().toUpperCase().match(/^CN\s*(\d{1,2})(\s*DAN)?\.?$/);
+  if (cn) return "CN" + parseInt(cn[1], 10);
   const m = String(x == null ? "" : x).trim()
     .match(/^(\d{1,2})\s*(?:°|º|no|vo|mo|ro|er|do|to)?\s*(?:kyu|kyū)?\s*\.?$/i);
   if (!m) return "";
@@ -2060,6 +2132,9 @@ function opcionesGrado(sel) {
   let h = `<option value="">-- Grado --</option>`;
   for (let n = 10; n >= 1; n--) {
     h += `<option value="${n}"${String(sel) === String(n) ? " selected" : ""}>${n} Kyu</option>`;
+  }
+  for (let n = 1; n <= 5; n++) {
+    h += `<option value="CN${n}"${String(sel) === "CN" + n ? " selected" : ""}>CN ${n} Dan</option>`;
   }
   if (sel && !gradoValido(sel)) h += `<option value="${escLst(sel)}" selected>${escLst(sel)} (revisar)</option>`;
   return h;
@@ -2197,8 +2272,10 @@ function parsearLinea(linea) {
          .replace(/^\s*\d{1,3}\s*[.)\-–:]\s*/, "")    // numeración "1." "1)" "1-"
          .trim();
     const m = t.match(/^(.*?[^\d\s,;:|\-–—])[\s,;:|\-–—]+(\d{1,2}\s*(?:°|º|no|vo|mo|ro|er|do|to)?\s*(?:kyu|kyū)?\s*\.?)\s*$/i);
-    if (m) { nombre = m[1]; grado = gradoDeTexto(m[2]); }
-    else   { nombre = t; }
+    const mcn = t.match(/^(.*?[^\s,;:|\-–—])[\s,;:|\-–—]+(CN\s*\d{1,2}(?:\s*dan)?\.?)\s*$/i);
+    if (mcn)    { nombre = mcn[1]; grado = gradoDeTexto(mcn[2]); }
+    else if (m) { nombre = m[1]; grado = gradoDeTexto(m[2]); }
+    else        { nombre = t; }
   }
 
   nombre = limpiarNombre(nombre);
@@ -2523,6 +2600,221 @@ async function compartirLink() {
     toast("Link copiado al portapapeles ✓");
   } catch (e) {
     window.prompt("Copie el link:", url);
+  }
+}
+
+// ══════════════════════════════════════════
+//  NUEVO — REGISTRO DE ALUMNOS (hojas Alumnos, Dojos y Grados)
+// ══════════════════════════════════════════
+const DOJOS_PESTANA = ["TEC", "UTT", "UAT"];   // "Otro" = cualquier otro dojo
+let registro      = [];                         // [{id,nombre,dojo,grado,ultimoExamen}]
+let catalogos     = { dojos: [], grados: [] };
+let enExamen      = {};                         // nombres que ya están en Hoja 1
+let dojoActivo    = "Todos";
+let regEditando   = null;                       // id en edición
+
+function normNom(n) { return String(n || "").replace(/\s+/g, " ").trim().toUpperCase(); }
+
+function fechaCorta(iso) {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || "—");
+}
+
+function opcionesLista(lista, sel, vacio) {
+  let h = `<option value="">${vacio}</option>`;
+  let hay = false;
+  lista.forEach(v => {
+    const s = String(v) === String(sel);
+    if (s) hay = true;
+    h += `<option value="${escLst(v)}"${s ? " selected" : ""}>${escLst(v)}</option>`;
+  });
+  if (sel && !hay) h += `<option value="${escLst(sel)}" selected>${escLst(sel)}</option>`;
+  return h;
+}
+
+function dojoDePestana(dojo) {
+  const d = String(dojo || "").trim().toUpperCase();
+  return DOJOS_PESTANA.includes(d) ? d : "Otro";
+}
+
+async function cargarRegistro() {
+  const wrap = document.getElementById("reg-wrap");
+  wrap.innerHTML = '<div class="loader">Cargando registro…</div>';
+  try {
+    const [cat, reg, hoja1] = await Promise.all([
+      get("getCatalogos"), get("getRegistroAlumnos"), get("getListaBase", { grupo: "A" })
+    ]);
+    catalogos = { dojos: cat.dojos || [], grados: cat.grados || [] };
+    registro = reg.alumnos || [];
+    enExamen = {};
+    (hoja1.lista || []).forEach(a => { enExamen[normNom(a.nombre)] = true; });
+    document.getElementById("reg-dojo").innerHTML  = opcionesLista(catalogos.dojos, document.getElementById("reg-dojo").value, "-- Dojo --");
+    document.getElementById("reg-grado").innerHTML = opcionesLista(catalogos.grados, document.getElementById("reg-grado").value, "-- Grado --");
+    regEditando = null;
+    renderRegistro();
+  } catch (e) {
+    wrap.innerHTML = `<div class="loader err">Error: ${escLst(e.message)}<br><small>Verifique que existan las hojas Alumnos, Dojos y Grados y que el script nuevo esté implementado.</small></div>`;
+  }
+}
+
+function switchDojo(d, btn) {
+  btn.closest(".gtabs").querySelectorAll(".gtab").forEach(b => b.classList.remove("on"));
+  btn.classList.add("on");
+  dojoActivo = d;
+  regEditando = null;
+  renderRegistro();
+}
+
+function renderRegistro() {
+  // contadores de pestañas
+  const cnt = { Todos: registro.length, TEC: 0, UTT: 0, UAT: 0, Otro: 0 };
+  registro.forEach(a => { cnt[dojoDePestana(a.dojo)]++; });
+  document.querySelectorAll("#reg-tabs .gtab").forEach(b => {
+    b.querySelector("span").textContent = `(${cnt[b.dataset.dojo] || 0})`;
+  });
+
+  const q = normNom(document.getElementById("reg-buscar").value);
+  const lista = registro
+    .filter(a => dojoActivo === "Todos" || dojoDePestana(a.dojo) === dojoActivo)
+    .filter(a => !q || normNom(a.nombre).includes(q) || String(a.id).includes(q));
+
+  const wrap = document.getElementById("reg-wrap");
+  if (!lista.length) {
+    wrap.innerHTML = `<div class="loader">${registro.length ? "No hay alumnos en esta pestaña." : "El registro está vacío. Agregue el primer alumno arriba."}</div>`;
+    return;
+  }
+  let h = `<table class="reg-tbl"><thead><tr>
+    <th>ID</th><th>Nombre</th><th>Dojo</th><th>Grado actual</th><th>Último examen</th><th style="text-align:right">Acciones</th>
+  </tr></thead><tbody>`;
+  lista.forEach(a => {
+    if (a.id === regEditando) {
+      h += `<tr>
+        <td>${escLst(a.id)}</td>
+        <td><input type="text" id="reg-e-nombre" value="${escLst(a.nombre)}" style="width:100%;min-width:160px"/></td>
+        <td><select id="reg-e-dojo">${opcionesLista(catalogos.dojos, a.dojo, "-- Dojo --")}</select></td>
+        <td><select id="reg-e-grado">${opcionesLista(catalogos.grados, a.grado, "-- Grado --")}</select></td>
+        <td><input type="date" id="reg-e-fecha" value="${escLst(a.ultimoExamen)}"/></td>
+        <td><div class="reg-acc">
+          <button class="reg-env" onclick="guardarEdicionRegistro('${a.id}')">💾 Guardar</button>
+          <button onclick="regEditando=null;renderRegistro()">Cancelar</button>
+        </div></td></tr>`;
+      return;
+    }
+    const ya = !!enExamen[normNom(a.nombre)];
+    h += `<tr>
+      <td>${escLst(a.id)}</td>
+      <td><strong>${escLst(a.nombre)}</strong></td>
+      <td>${escLst(a.dojo)}</td>
+      <td style="white-space:nowrap">${escLst(a.grado)}</td>
+      <td>${fechaCorta(a.ultimoExamen)}</td>
+      <td><div class="reg-acc">
+        <button title="Editar" onclick="regEditando='${a.id}';renderRegistro()">✏️</button>
+        <button title="Eliminar" onclick="eliminarRegistro('${a.id}')">🗑️</button>
+        <button class="reg-env" ${ya ? "disabled" : ""} title="${ya ? "Ya está en la lista de examen" : "Enviar a la lista de examen (Grupo A)"}"
+          onclick="enviarRegistroAExamen('${a.id}',this)">${ya ? "✓ En examen" : "➡️ Enviar a examen"}</button>
+      </div></td></tr>`;
+  });
+  h += `</tbody></table>`;
+  wrap.innerHTML = h;
+}
+
+async function agregarRegistro() {
+  const data = {
+    nombre: normNom(document.getElementById("reg-nombre").value),
+    dojo: document.getElementById("reg-dojo").value,
+    grado: document.getElementById("reg-grado").value,
+    ultimoExamen: document.getElementById("reg-fecha").value
+  };
+  if (!data.nombre) { toast("Escriba el nombre del alumno.", true); return; }
+  if (!data.dojo)   { toast("Seleccione el dojo.", true); return; }
+  if (!data.grado)  { toast("Seleccione el grado.", true); return; }
+  const dup = registro.find(a => normNom(a.nombre) === data.nombre);
+  if (dup) { toast(`Ya existe ${data.nombre} (ID ${dup.id}).`, true); return; }
+
+  const btn = document.getElementById("btn-reg-agregar");
+  btn.disabled = true; btn.textContent = "Guardando…";
+  try {
+    const r = await post("addRegistroAlumno", {}, data);
+    registro.push({ id: r.id, ...data });
+    document.getElementById("reg-nombre").value = "";
+    document.getElementById("reg-fecha").value = "";
+    document.getElementById("reg-nombre").focus(); // dojo y grado se conservan
+    renderRegistro();
+    toast(`Alumno agregado con ID ${r.id} ✓`);
+  } catch (e) {
+    toast("Error: " + e.message, true);
+  } finally {
+    btn.disabled = false; btn.textContent = "＋ Agregar alumno";
+  }
+}
+
+async function guardarEdicionRegistro(id) {
+  const data = {
+    id,
+    nombre: normNom(document.getElementById("reg-e-nombre").value),
+    dojo: document.getElementById("reg-e-dojo").value,
+    grado: document.getElementById("reg-e-grado").value,
+    ultimoExamen: document.getElementById("reg-e-fecha").value
+  };
+  if (!data.nombre || !data.dojo || !data.grado) { toast("Nombre, dojo y grado son obligatorios.", true); return; }
+  try {
+    await post("updateRegistroAlumno", {}, data);
+    const a = registro.find(x => x.id === id);
+    if (a) Object.assign(a, data);
+    regEditando = null;
+    renderRegistro();
+    toast("Registro actualizado ✓");
+  } catch (e) {
+    toast("Error: " + e.message, true);
+  }
+}
+
+async function eliminarRegistro(id) {
+  const a = registro.find(x => x.id === id);
+  if (!a) return;
+  if (!confirm(`¿Eliminar del registro a ${a.nombre} (ID ${a.id})?\nEsta acción no puede deshacerse.`)) return;
+  try {
+    await get("deleteRegistroAlumno", { id });
+    registro = registro.filter(x => x.id !== id);
+    renderRegistro();
+    toast("Registro eliminado ✓");
+  } catch (e) {
+    toast("Error: " + e.message, true);
+  }
+}
+
+async function enviarRegistroAExamen(id, btn) {
+  const a = registro.find(x => x.id === id);
+  if (!a) return;
+  if (listasSucias.A) {
+    toast("Tiene cambios sin guardar en la lista del Grupo A (vista 🥋). Guárdelos o descártelos primero.", true);
+    return;
+  }
+  btn.disabled = true; btn.textContent = "Enviando…";
+  try {
+    const r = await get("enviarAExamen", { id });
+    enExamen[normNom(a.nombre)] = true;
+    renderRegistro();
+    toast(r.message || "Enviado a examen ✓");
+    if (puedeEditarListas()) cargarListas(false); // refresca la lista de la vista 🥋
+  } catch (e) {
+    toast("Error: " + e.message, true);
+    renderRegistro();
+  }
+}
+
+// Se llama después de exportar el PDF del Grupo A
+async function registrarExamenTrasPDF() {
+  try {
+    const r = await get("registrarExamen");
+    const n = (r.actualizados || []).length;
+    let msg = n ? `Registro actualizado: ${n} alumno(s) subieron de grado ✓` : "Registro: no hubo alumnos nuevos que actualizar.";
+    if ((r.yaRegistrados || []).length) msg += ` ${r.yaRegistrados.length} ya estaban registrados hoy.`;
+    if ((r.noEncontrados || []).length) msg += ` No están en el registro: ${r.noEncontrados.join(", ")}.`;
+    toast(msg, (r.noEncontrados || []).length > 0);
+    if (document.getElementById("v-registro").classList.contains("on")) cargarRegistro();
+  } catch (e) {
+    toast("El PDF se generó, pero no se pudo actualizar el registro: " + e.message, true);
   }
 }
 
