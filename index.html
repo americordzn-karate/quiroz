@@ -400,6 +400,8 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
      VIEW: ALUMNOS
 ═══════════════════════════════════════════ -->
 <section class="view" id="v-alumnos">
+  <!-- Área "Agregar Alumno" original: oculta (se conserva el código por compatibilidad) -->
+  <div id="agregar-alumno-original" style="display:none">
   <h2 class="stitle">Agregar Alumno</h2>
   <div class="card" style="margin-bottom:1.25rem">
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
@@ -440,19 +442,10 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     </div>
   </div>
 
-  <h2 class="stitle">Listado General de Alumnos</h2>
-  <div class="gtabs">
-    <button class="gtab on" onclick="switchGrupo('alum','A',this)">Grupo A</button>
-    <button class="gtab"    onclick="switchGrupo('alum','B',this)">Grupo B</button>
-  </div>
-  <div class="card tbl-wrap" id="alum-wrap"><div class="loader">Cargando…</div></div>
-</section>
+  </div><!-- /agregar-alumno-original -->
 
-<!-- ══════════════════════════════════════════
-     VIEW: CONFIG
-═══════════════════════════════════════════ -->
-<section class="view" id="v-config">
   <!-- ═══ NUEVO: LISTAS DE ALUMNOS (sinodales 0 y 1) ═══ -->
+  <div id="lst-seccion" style="display:none">
   <h2 class="stitle">📋 Listas de alumnos</h2>
   <div class="card">
     <p class="lst-help" style="margin-bottom:.75rem">Capture aquí el nombre y grado de cada alumno. El orden no importa: la hoja de cálculo los ordena automáticamente. Al terminar, pulse <strong>Guardar y cargar listas</strong> para verlos en las tarjetas de evaluación.</p>
@@ -496,7 +489,20 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
     <p style="font-size:.84rem;color:var(--ink3);margin-bottom:.75rem">Borra <strong>las listas de alumnos de ambos grupos (A y B)</strong> y <strong>todas las calificaciones</strong> para comenzar un examen nuevo. Esta acción no puede deshacerse.</p>
     <button class="btn btn-red" onclick="abrirModalNuevoExamen()">🆕 NUEVO EXAMEN</button>
   </div>
+  </div><!-- /lst-seccion -->
 
+  <h2 class="stitle">Listado General de Alumnos</h2>
+  <div class="gtabs">
+    <button class="gtab on" onclick="switchGrupo('alum','A',this)">Grupo A</button>
+    <button class="gtab"    onclick="switchGrupo('alum','B',this)">Grupo B</button>
+  </div>
+  <div class="card tbl-wrap" id="alum-wrap"><div class="loader">Cargando…</div></div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     VIEW: CONFIG
+═══════════════════════════════════════════ -->
+<section class="view" id="v-config">
   <div id="config-principal">
   <h2 class="stitle">Sinodales</h2>
   <div class="card">
@@ -1991,11 +1997,18 @@ function puedeEditarListas() {
 function aplicarAccesoListas() {
   const r = parseInt(rolNum, 10);
   const puede = puedeEditarListas();
-  if (puede) document.getElementById("nb-config").style.display = "";
-  // El sinodal 1 conserva su hoja de evaluación (botón 📝) y solo ve la sección de listas
+  if (puede) {
+    document.getElementById("nb-config").style.display = "";
+    document.getElementById("nb-alumnos").style.display = "";
+  }
+  // La sección de listas (en la vista 🥋 Alumnos) solo la ven los sinodales 0 y 1
+  document.getElementById("lst-seccion").style.display = puede ? "" : "none";
+  if (r === 1) cargarAlumnos();
+  // El sinodal 1 conserva su hoja de evaluación (botón 📝) y tiene el Panel de Configuración completo
   document.getElementById("nb-eval").style.display = (r === 1) ? "" : "none";
   const cp = document.getElementById("config-principal");
-  if (cp) cp.style.display = (r === 0) ? "" : "none";
+  if (cp) cp.style.display = puede ? "" : "none";
+  if (r === 1) cargarConfig(); // sinodales y aspectos por grado (el 0 ya los carga en aplicarRol)
   if (puede) {
     document.getElementById("lst-nuevo-grado").innerHTML = opcionesGrado("");
     cargarListas(false);
