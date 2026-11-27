@@ -200,7 +200,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
 
 /* CONFIG GRID */
 .cg-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.cg{display:grid;grid-template-columns:130px repeat(6,1fr);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:.83rem;min-width:560px}
+.cg{display:grid;grid-template-columns:65px repeat(6,1fr);border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:.83rem;min-width:560px}
 .cg-h{background:var(--ink);color:#fff;padding:7px 8px;text-align:center;font-weight:500;border-right:1px solid rgba(255,255,255,.1)}
 .cg-h:last-child{border-right:none}
 .cg-rl{background:#f8f6f1;padding:7px 10px;font-weight:500;border-top:1px solid var(--border);border-right:1px solid var(--border)}
@@ -259,7 +259,7 @@ tbody td{padding:7px 11px;border-bottom:1px solid #eee;vertical-align:middle}
 .reg-tbl th{background:var(--ink);color:#fff;padding:8px 10px;text-align:left;font-weight:500;white-space:nowrap}
 .reg-tbl td{padding:6px 10px;border-bottom:1px solid #eee;vertical-align:middle}
 .reg-tbl tbody tr:hover{background:#fafaf8}
-.reg-acc{display:flex;gap:4px;justify-content:flex-end;white-space:nowrap}
+.reg-acc{display:flex;gap:4px;justify-content:center;white-space:nowrap}
 .reg-acc button{border:1px solid var(--border);background:var(--white);border-radius:6px;padding:5px 9px;cursor:pointer;font-size:.8rem;font-family:var(--font)}
 .reg-acc button:hover{background:#f0ede8}
 .reg-acc .reg-env{background:var(--red);border-color:var(--red);color:#fff}
@@ -2171,7 +2171,6 @@ function aplicarAccesoListas() {
     document.getElementById("reg-seccion").style.display = "";
     document.getElementById("listado-general-seccion").style.display = "none";
     document.getElementById("nuevo-examen-seccion").style.display = "none";
-    document.getElementById("reg-ayuda").textContent = "Haga clic en el nombre de un alumno para ver su historial de exámenes.";
     showView("v-alumnos");
     cargarRegistro();
   }
@@ -2761,15 +2760,15 @@ function renderRegistro() {
     return;
   }
   let h = `<table class="reg-tbl"><thead><tr>
-    <th>ID</th><th>Nombre</th><th>Dojo</th><th>Grado actual</th><th>Último examen</th><th style="text-align:right">Acciones</th>
+    <th style="display:none">ID</th><th>Nombre</th><th>Dojo</th><th style="text-align:center">Grado</th><th>Último examen</th><th style="text-align:center">Acciones</th>
   </tr></thead><tbody>`;
   lista.forEach(a => {
     if (a.id === regEditando) {
       h += `<tr>
-        <td>${escLst(a.id)}</td>
+        <td style="display:none">${escLst(a.id)}</td>
         <td><input type="text" id="reg-e-nombre" value="${escLst(a.nombre)}" style="width:100%;min-width:160px"/></td>
         <td><select id="reg-e-dojo">${opcionesLista(catalogos.dojos, a.dojo, "-- Dojo --")}</select></td>
-        <td><select id="reg-e-grado">${opcionesLista(catalogos.grados, a.grado, "-- Grado --")}</select></td>
+        <td style="text-align:center"><select id="reg-e-grado">${opcionesLista(catalogos.grados, a.grado, "-- Grado --")}</select></td>
         <td><input type="date" id="reg-e-fecha" value="${escLst(a.ultimoExamen)}"/></td>
         <td><div class="reg-acc">
           <button class="reg-env" onclick="guardarEdicionRegistro('${a.id}')">💾 Guardar</button>
@@ -2778,17 +2777,17 @@ function renderRegistro() {
       return;
     }
     const ya = !!enExamen[a.id];
-    const soloRegistro = parseInt(rolNum, 10) < 0; // espectador: sin Eliminar ni Enviar a examen
+    const soloRegistro = parseInt(rolNum, 10) < 0; // espectador: sin Eliminar (sí puede Enviar a examen)
     h += `<tr>
-      <td>${escLst(a.id)}</td>
+      <td style="display:none">${escLst(a.id)}</td>
       <td><a href="#" onclick="verHistorial('${a.id}');return false" title="Ver historial de exámenes" style="color:var(--ink);font-weight:700;text-decoration:underline;text-decoration-color:var(--ink4)">${escLst(a.nombre)}</a></td>
       <td>${escLst(a.dojo)}</td>
-      <td style="white-space:nowrap">${escLst(a.grado)}</td>
+      <td style="white-space:nowrap;text-align:center">${escLst(a.grado)}</td>
       <td>${fechaCorta(a.ultimoExamen)}</td>
       <td><div class="reg-acc">
         <button title="Editar" onclick="regEditando='${a.id}';renderRegistro()">✏️</button>
         ${soloRegistro ? "" : `<button title="Eliminar" onclick="eliminarRegistro('${a.id}')">🗑️</button>`}
-        ${soloRegistro ? "" : `<button class="reg-env" ${ya ? "disabled" : ""} title="${ya ? "Ya está en la lista de examen" : "Enviar a la lista de examen (Grupo A)"}"
+        ${`<button class="reg-env" ${ya ? "disabled" : ""} title="${ya ? "Ya está en la lista de examen" : "Enviar a la lista de examen (Grupo A)"}"
           onclick="enviarRegistroAExamen('${a.id}',this)">${ya ? "✓ En examen" : "➡️ Enviar a examen"}</button>`}
       </div></td></tr>`;
   });
